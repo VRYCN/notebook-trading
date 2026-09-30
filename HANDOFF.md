@@ -15,7 +15,7 @@ Wants: (1) collect messages + images by timestamp, (2) AI summary per day, (3) s
 ## Files in this repo
 | File | Role |
 |---|---|
-| `trade-chat-notebook.html` | The notebook page (UI only). Published earlier as claude.ai artifact https://claude.ai/artifact/MenCBbv4Eix8XDKA3McqxK — **that artifact still runs the old single-file version**; republishing needs `core.js` and `collector.js` passed as supporting `files`. |
+| `trade-chat-notebook.html` | The notebook page (UI only). Published earlier as claude.ai artifact https://claude.ai/artifact/MenCBbv4Eix8XDKA3McqxK — Republished with the new version (v3); `core.js` and `collector.js` are published as supporting `files`, so republish all three together. |
 | `core.js` | Pure logic (UMD: `window.TCN` / `require`): Bangkok day keys, snowflake sort, export merge/dedupe, health check, search, AI digest + prompts, Drive naming, tags, Markdown export. |
 | `collector.js` | `tcnCollector()` — the console script. The page shows `'(' + tcnCollector.toString() + ')();'`, so it must stay self-contained. |
 | `apps-script/Code.gs`, `apps-script/Index.html` | Google Apps Script web app (user deploys under own account, "Only myself"). Uploads images to `Drive/Discord-Trade/<channel>/<YYYY-MM-DD>/HHMM_user_msgid_n.ext` (Bangkok time), sets file description = message text, writes `<name>-drive.json` with `drive[]` links. Skips existing filenames. Its naming block mirrors `core.js`; `test/drive-naming.test.js` enforces that. |
@@ -47,7 +47,7 @@ Wants: (1) collect messages + images by timestamp, (2) AI summary per day, (3) s
 
 ## Next steps
 1. Run the collector on the real channel; adjust selectors + fixture.
-2. Hosting decision (user's call): republish the artifact with the new files, or GitHub Pages under VRYCN (no AI summary there unless a backend holding the API key is added — never put the key in client code).
+2. Hosting: decided to stay on the claude.ai artifact (keeps AI summary and cloud notes). GitHub Pages remains a fallback; the page works there without AI.
 3. Optionally merge the Drive step into the app flow (Apps Script serving the notebook, or a Python script with the Drive API on the user's personal PC).
 4. Apps Script: batch several images per `google.script.run` call and cache folder lookups if 300+ images/day is slow.
 
