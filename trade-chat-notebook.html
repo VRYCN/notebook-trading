@@ -125,6 +125,18 @@ main{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
 .lightbox img{max-height:100%;max-width:100%}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--sheet);padding:8px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--rule);background:var(--sheet);border-radius:999px;padding:2px 10px;font-size:13px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#fff}
+.note .tags{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}
+.note .tags span{font-size:12px;color:var(--gold)}
+.note input.tagin{width:100%;border:1px solid var(--rule);border-radius:7px;background:var(--paper);padding:5px 8px;margin-top:6px;font-size:13px}
+.dayhdr{padding:6px 14px;background:var(--paper);font-weight:600;font-size:13px;border-top:1px solid var(--rule)}
+.dayhdr:first-child{border-top:0}
+.msg time a{color:inherit}
+.health{border-left:3px solid var(--bear);background:var(--sheet);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:12px;font-size:14px}
+.day.all .d{color:var(--gold)}
+.method .refs button{border:0;background:none;padding:0;font-size:12px;color:var(--gold);margin-right:8px}
 [hidden]{display:none!important}
 
 @media (max-width:820px){
@@ -154,7 +166,7 @@ main{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
   <section id="intake" class="intake">
     <label class="drop" id="drop">
       <h2>วางไฟล์แชทที่นี่</h2>
-      <p class="muted">ลากไฟล์ <b>.json</b> จากสคริปต์เก็บแชทมาวาง หรือคลิกเพื่อเลือกไฟล์ (เลือกหลายไฟล์ได้)</p>
+      <p class="muted">ลากไฟล์ <b>.json</b> จากสคริปต์เก็บแชทมาวาง หรือคลิกเพื่อเลือกไฟล์ (เลือกหลายไฟล์ได้ ไฟล์สำรองสมุดก็วางที่นี่ได้)</p>
       <input type="file" id="file" accept=".json,application/json" multiple hidden>
       <span class="btn primary">เลือกไฟล์</span>
     </label>
@@ -164,7 +176,7 @@ main{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
         <li>เปิด Discord บนเว็บเบราว์เซอร์ แล้วเข้าห้องที่ต้องการ</li>
         <li>กด <b>F12</b> → แท็บ <b>Console</b> วางสคริปต์ด้านล่าง แล้วกด Enter</li>
         <li>กด <b>Jump to unread</b> (หรือเลื่อนไปจุดที่อ่านค้าง) แล้ว<b>เลื่อนลงเอง</b>จนถึงข้อความล่าสุด ป้ายมุมขวาล่างจะนับจำนวนข้อความ</li>
-        <li>คลิกป้ายนับ เพื่อดาวน์โหลดไฟล์ .json</li>
+        <li>คลิกป้ายนับ เพื่อดาวน์โหลดไฟล์ .json (ถ้าป้ายเป็นสีแดง แปลว่าสคริปต์หาข้อความไม่เจอหรือได้ข้อมูลไม่ครบ พิมพ์ <code>__tcn.diag()</code> ใน Console เพื่อดูรายละเอียด)</li>
         <li>(ถ้าต้องการเก็บรูปถาวร) นำไฟล์ไปผ่านหน้าอัปโหลดรูปเข้า Google Drive ก่อน แล้วใช้ไฟล์ <b>-drive.json</b> ที่ได้</li>
         <li>ลากไฟล์ .json มาวางที่นี่</li>
       </ol>
@@ -179,8 +191,10 @@ main{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
     <nav class="days" id="days" aria-label="วันที่"></nav>
     <div>
       <article class="sheet" id="summary"></article>
-      <div class="filters">
+      <div class="health" id="health" hidden></div>
+      <div class="filters" id="filters">
         <input type="search" id="q" placeholder="ค้นหาข้อความ ชื่อ หรือคำเฉพาะ">
+        <label class="small"><input type="checkbox" id="allDays"> ค้นทุกวัน</label>
         <label class="small"><input type="checkbox" id="onlyKeep"> เฉพาะที่ AI แนะนำให้เก็บ</label>
         <label class="small"><input type="checkbox" id="onlyImg"> เฉพาะที่มีรูป</label>
         <button class="btn small" id="loadMore">โหลดไฟล์เพิ่ม</button>
@@ -194,7 +208,10 @@ main{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
     <div class="lib-tools">
       <input type="search" id="libQ" placeholder="ค้นหาในสมุดบันทึก">
       <button class="btn" id="exportMd">ดาวน์โหลดเป็น Markdown</button>
+      <button class="btn" id="backup">สำรองสมุด (.json)</button>
     </div>
+    <div class="chips" id="tagBar"></div>
+    <p class="muted small" id="storeInfo"></p>
     <div id="libList"></div>
   </section>
 </main>
@@ -202,88 +219,88 @@ main{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
 <div class="lightbox" id="lightbox"><img alt=""></div>
 <div class="toast" id="toast" role="status"></div>
 
+
+<script src="core.js"></script>
+<script src="collector.js"></script>
 <script>
+const T = window.TCN;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ALL = '*';
+const thDate = (k, opt) => { const d = new Date(k + 'T12:00:00+07:00'); return isNaN(d) ? k : d.toLocaleDateString('th-TH', { timeZone: T.TZ, ...opt }); };
+const dayLabel = k => thDate(k, { weekday: 'short', day: 'numeric', month: 'short' });
+const fmtTime = iso => new Date(iso).toLocaleString('th-TH', { timeZone: T.TZ, dateStyle: 'medium', timeStyle: 'short' });
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 2600); }
+
 /* ---------- collector script shown to the user ---------- */
-const COLLECTOR = `(() => {
-  if (window.__tcn) { console.log('สคริปต์ทำงานอยู่แล้ว'); return; }
-  const seen = new Map(), cache = new Map();
-  const shrink = url => {
-    if (cache.has(url)) return cache.get(url);
-    const p = (async () => {
-      try {
-        const b = await (await fetch(url)).blob();
-        const bm = await createImageBitmap(b);
-        const s = Math.min(1, 1400 / Math.max(bm.width, bm.height));
-        const c = document.createElement('canvas');
-        c.width = Math.round(bm.width * s); c.height = Math.round(bm.height * s);
-        c.getContext('2d').drawImage(bm, 0, 0, c.width, c.height);
-        return c.toDataURL('image/jpeg', 0.78);
-      } catch (e) { return url; }
-    })();
-    cache.set(url, p); return p;
-  };
-  const badge = document.createElement('button');
-  badge.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:99999;padding:10px 16px;border:0;border-radius:10px;background:#A87B1E;color:#fff;font:600 14px sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer';
-  document.body.appendChild(badge);
-  const grab = () => {
-    document.querySelectorAll('li[id^="chat-messages-"]').forEach(li => {
-      const id = li.id.split('-').pop();
-      const srcs = [...li.querySelectorAll('[class*="imageWrapper"] img, [class*="mediaAttachmentsContainer"] img')]
-        .map(i => i.currentSrc || i.src).filter(s => /discordapp\\.(com|net)|discord\\.com/.test(s));
-      let m = seen.get(id);
-      if (!m) {
-        m = { id,
-          time: li.querySelector('time')?.getAttribute('datetime') || '',
-          user: li.querySelector('[id^="message-username-"] [class*="username_"], h3 [class*="username_"]')?.innerText || '',
-          text: li.querySelector('[id^="message-content-"]')?.innerText || '',
-          reply: li.querySelector('[id^="message-reply-context-"] [class*="repliedTextContent"]')?.innerText || '',
-          src: [], imgs: [] };
-        seen.set(id, m);
-      }
-      srcs.forEach(s => { if (!m.src.includes(s)) { m.src.push(s); m.imgs.push(shrink(s)); } });
-    });
-    badge.textContent = 'เก็บแล้ว ' + seen.size + ' ข้อความ · คลิกเพื่อดาวน์โหลด';
-  };
-  const obs = new MutationObserver(() => { clearTimeout(window.__tcnT); window.__tcnT = setTimeout(grab, 150); });
-  obs.observe(document.body, { childList: true, subtree: true });
-  grab();
-  badge.onclick = async () => {
-    badge.textContent = 'กำลังเตรียมรูป...';
-    const rows = [...seen.values()].sort((a, b) => (BigInt(a.id) < BigInt(b.id) ? -1 : 1));
-    let last = '';
-    const out = [];
-    for (const r of rows) {
-      if (r.user) last = r.user;
-      out.push({ id: r.id, time: r.time, user: r.user || last, text: r.text, reply: r.reply, imgs: await Promise.all(r.imgs) });
-    }
-    const data = { channel: document.title.replace(/ \\| Discord$/, ''), exportedAt: new Date().toISOString(), messages: out };
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
-    a.download = 'discord-' + new Date().toISOString().slice(0, 16).replace(':', '') + '.json';
-    a.click();
-    grab();
-  };
-  window.__tcn = { stop: () => { obs.disconnect(); badge.remove(); delete window.__tcn; } };
-  console.log('เริ่มเก็บแล้ว: เลื่อนแชทเอง แล้วคลิกป้ายมุมขวาล่างเพื่อดาวน์โหลด  (หยุด: __tcn.stop())');
-})();`;
-document.getElementById('collector').value = COLLECTOR;
-document.getElementById('copyCollector').onclick = async () => {
-  const ta = document.getElementById('collector');
+const COLLECTOR = '(' + tcnCollector.toString() + ')();';
+$('collector').value = COLLECTOR;
+$('copyCollector').onclick = async () => {
   try { await navigator.clipboard.writeText(COLLECTOR); toast('คัดลอกแล้ว'); }
-  catch { ta.focus(); ta.select(); toast('เลือกข้อความแล้ว กด Ctrl+C เพื่อคัดลอก'); }
+  catch { const ta = $('collector'); ta.focus(); ta.select(); toast('เลือกข้อความแล้ว กด Ctrl+C เพื่อคัดลอก'); }
 };
 
 /* ---------- state ---------- */
-const S = { channel: '', msgs: new Map(), days: [], day: null, summaries: {}, notes: [], busy: false };
-let sample = null, db = null, assets = null, uid = null, col = null, imgLimit = 0;
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const dayKey = iso => { const d = new Date(iso); return isNaN(d) ? 'ไม่ทราบวัน' : d.toLocaleDateString('sv-SE'); };
-const hhmm = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); };
-const dayLabel = k => { const d = new Date(k + 'T00:00'); return isNaN(d) ? k : d.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' }); };
-const hash = s => { let h = 5381; for (const c of s) h = ((h << 5) + h + c.codePointAt(0)) >>> 0; return h.toString(36); };
-const sumKey = () => 's_' + hash(S.channel || 'chat') + '_' + String(S.day).replace(/[^\w-]/g, '_');
-function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 2200); }
+const S = { channel: '', msgs: new Map(), days: [], byDay: {}, day: null, summaries: {}, notes: [], busy: false, tag: '' };
+let sample = null, assets = null, downloads = null, col = null, imgLimit = 0;
+const sumKey = (d = S.day) => T.sumKey(S.channel, d);
+const curSum = () => S.summaries[sumKey()];
+const keepMap = day => new Map((S.summaries[sumKey(day)]?.keep || []).map(k => [k.id, k.why]));
+
+/* ---------- storage: claude db when available, else IndexedDB in this browser ---------- */
+const local = {
+  db: null,
+  open() {
+    return new Promise(ok => {
+      try {
+        const r = indexedDB.open('trade-chat-notebook', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('docs', { keyPath: '_id' });
+        r.onsuccess = () => { local.db = r.result; ok(true); };
+        r.onerror = r.onblocked = () => ok(false);
+      } catch { ok(false); }
+    });
+  },
+  tx(mode, fn) {
+    return new Promise((ok, no) => {
+      if (!local.db) return ok(null);
+      const t = local.db.transaction('docs', mode), st = t.objectStore('docs');
+      const r = fn(st);
+      t.oncomplete = () => ok(r && r.result); t.onerror = () => no(t.error);
+    });
+  },
+  all() { return local.tx('readonly', st => st.getAll()); },
+  put(doc) { return local.tx('readwrite', st => st.put(doc)); },
+  del(id) { return local.tx('readwrite', st => st.delete(id)); }
+};
+function applyDoc(id, v) {
+  if (!v) { S.notes = S.notes.filter(n => n._id !== id); delete S.summaries[id]; return; }
+  if (v.kind === 'note') { S.notes = S.notes.filter(n => n._id !== id); S.notes.push({ ...v, _id: id }); }
+  else if (v.kind === 'summary') S.summaries[id] = v;
+}
+async function putDoc(id, doc) {
+  if (col) return col.doc(id).set(doc);
+  await local.put({ ...doc, _id: id }); applyDoc(id, doc); refreshAll();
+}
+async function patchDoc(id, patch) {
+  if (col) return col.doc(id).update(patch);
+  const n = S.notes.find(x => x._id === id) || S.summaries[id];
+  await putDoc(id, { ...n, ...patch, _id: undefined });
+}
+async function delDoc(id) {
+  if (col) return col.doc(id).delete();
+  await local.del(id); applyDoc(id, null); refreshAll();
+}
+function refreshAll() {
+  $('libCount').textContent = S.notes.length ? '(' + S.notes.length + ')' : '';
+  if (S.days.length) { renderDays(); if (!S.busy) renderSummary(); renderMsgs(); }
+  if (!$('library').hidden) renderLib();
+}
+async function saveFile(filename, text, type) {
+  if (downloads) { try { await downloads.save({ filename, data: text }); return; } catch { toast('ดาวน์โหลดไม่สำเร็จ'); return; } }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = filename;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
 
 /* ---------- tabs ---------- */
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
@@ -300,158 +317,201 @@ const drop = $('drop');
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('over'));
 drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); loadFiles(e.dataTransfer.files); });
-$('file').onchange = e => loadFiles(e.target.files);
+$('file').onchange = e => { loadFiles(e.target.files); e.target.value = ''; };
 $('loadMore').onclick = () => $('file').click();
 
 async function loadFiles(files) {
-  let added = 0;
+  let added = 0, warns = [];
   for (const f of files) {
+    let data;
+    try { data = JSON.parse(await f.text()); } catch { toast('อ่านไฟล์ ' + f.name + ' ไม่ได้ ต้องเป็นไฟล์ .json'); continue; }
+    if (data && data.kind === 'tcn-backup') { await restoreBackup(data); continue; }
     try {
-      const data = JSON.parse(await f.text());
-      const list = Array.isArray(data) ? data : data.messages;
-      if (!Array.isArray(list)) throw 0;
-      if (data.channel) S.channel = data.channel;
-      for (const m of list) {
-        if (!m || !m.id) continue;
-        if (!S.msgs.has(m.id)) added++;
-        const imgs = (m.imgs || m.images || []).filter(Boolean);
-        const drive = Array.isArray(m.drive) ? m.drive : [];
-        S.msgs.set(String(m.id), { id: String(m.id), time: m.time || '', user: m.user || '', text: m.text || '', reply: m.reply || '', imgs, drive });
-      }
-    } catch { toast('อ่านไฟล์ ' + f.name + ' ไม่ได้ ต้องเป็นไฟล์ .json จากสคริปต์เก็บแชท'); }
+      const r = T.mergeExport(S.msgs, data);
+      if (r.channel) S.channel = r.channel;
+      added += r.added;
+      const list = (Array.isArray(data) ? data : data.messages).map(T.normalize).filter(Boolean);
+      warns.push(...T.healthCheck(list).map(w => f.name + ': ' + w));
+    } catch { toast('ไฟล์ ' + f.name + ' ไม่ใช่ไฟล์จากสคริปต์เก็บแชท'); }
   }
+  $('health').hidden = !warns.length;
+  $('health').innerHTML = warns.map(esc).join('<br>');
   if (!S.msgs.size) return;
-  const byDay = {};
-  for (const m of S.msgs.values()) (byDay[dayKey(m.time)] ||= []).push(m);
-  for (const k in byDay) byDay[k].sort((a, b) => (BigInt(a.id) < BigInt(b.id) ? -1 : 1));
-  S.byDay = byDay;
-  S.days = Object.keys(byDay).sort();
-  if (!S.day || !byDay[S.day]) S.day = S.days[0];
-  $('chanName').textContent = (S.channel || 'ห้องแชท') + ' · ' + S.msgs.size.toLocaleString() + ' ข้อความ';
+  const g = T.groupByDay(S.msgs.values());
+  S.byDay = g.byDay; S.days = g.days;
+  if (!S.day || (S.day !== ALL && !S.byDay[S.day])) S.day = S.days[0];
+  $('chanName').textContent = (S.channel || 'ห้องแชท') + ' · ' + S.msgs.size.toLocaleString() + ' ข้อความ · ' + S.days.length + ' วัน';
   $('intake').hidden = true; $('reader').hidden = false; $('library').hidden = true;
   document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === 'read'));
   renderDays(); renderDay();
-  if (added) toast('เพิ่ม ' + added + ' ข้อความ');
+  if (added) toast('เพิ่ม ' + added.toLocaleString() + ' ข้อความ');
 }
 
 /* ---------- day list ---------- */
 function renderDays() {
   const max = Math.max(...S.days.map(d => S.byDay[d].length));
-  $('days').innerHTML = S.days.map(d => {
-    const n = S.byDay[d].length, done = S.summaries[keyFor(d)];
-    return `<button class="day" data-d="${d}" aria-current="${d === S.day}">
-      <span class="d"><span>${esc(dayLabel(d))}</span><span class="n">${n}</span></span>
+  const all = S.days.length > 1 ? `<button class="day all" data-d="${ALL}" aria-current="${S.day === ALL}">
+      <span class="d"><span>ภาพรวมทุกวัน</span><span class="n">${S.days.length} วัน</span></span>
+      ${S.summaries[sumKey(ALL)] ? '<span class="done">สรุปแล้ว</span>' : ''}</button>` : '';
+  $('days').innerHTML = all + S.days.map(d => {
+    const n = S.byDay[d].length;
+    return `<button class="day" data-d="${esc(d)}" aria-current="${d === S.day}">
+      <span class="d"><span>${esc(d === T.UNKNOWN_DAY ? d : dayLabel(d))}</span><span class="n">${n}</span></span>
       <span class="vol"><i style="width:${Math.max(4, n / max * 100)}%"></i></span>
-      ${done ? '<span class="done">สรุปแล้ว</span>' : ''}</button>`;
+      ${S.summaries[sumKey(d)] ? '<span class="done">สรุปแล้ว</span>' : ''}</button>`;
   }).join('');
   $('days').querySelectorAll('.day').forEach(b => b.onclick = () => { S.day = b.dataset.d; renderDays(); renderDay(); });
 }
-const keyFor = d => { const o = S.day; S.day = d; const k = sumKey(); S.day = o; return k; };
+function renderDay() {
+  const all = S.day === ALL;
+  $('filters').hidden = all; $('msgs').hidden = all;
+  renderSummary(); renderMsgs();
+}
+const pendingDays = () => S.days.filter(d => d !== T.UNKNOWN_DAY && !S.summaries[sumKey(d)]);
 
 /* ---------- summary ---------- */
-function renderDay() { renderSummary(); renderMsgs(); }
-
 function renderSummary() {
-  const el = $('summary'), list = S.byDay[S.day], sum = S.summaries[sumKey()];
-  const imgCount = list.reduce((a, m) => a + m.imgs.filter(isData).length, 0);
-  let head = `<div class="sumhead"><h2>${esc(dayLabel(S.day))}</h2>
-    <span class="muted small">${list.length} ข้อความ · ${imgCount} รูป</span>
-    <div class="actions">${sample ? `<button class="btn ${sum ? '' : 'gold'}" id="doSum">${sum ? 'สรุปใหม่' : 'สรุปวันนี้'}</button>` : ''}</div></div>`;
-  if (S.busy) { el.innerHTML = head + `<div class="status" id="sumStatus">กำลังอ่านแชท...</div>`; return; }
-  if (!sum) {
-    el.innerHTML = head + `<p class="status">${sample
-      ? 'กด “สรุปวันนี้” เพื่อให้ AI อ่านข้อความและรูปของวันนี้ แล้วสรุปประเด็น วิธีเทรดที่มีคนแชร์ และคัดข้อความที่น่าเก็บให้'
-      : 'การสรุปด้วย AI ใช้ได้เมื่อเปิดหน้านี้ผ่าน Claude ตอนนี้ยังอ่านข้อความและกด ⭐ เก็บเองได้ตามปกติ'}</p>`;
+  const el = $('summary'), all = S.day === ALL, sum = curSum();
+  const pend = pendingDays();
+  let title, info, actions = '';
+  if (all) {
+    const done = S.days.filter(d => S.summaries[sumKey(d)]);
+    title = `ภาพรวม ${S.days.length} วัน`;
+    info = `${dayLabel(S.days[0])} – ${dayLabel(S.days[S.days.length - 1])} · สรุปรายวันแล้ว ${done.length} วัน`;
+    if (sample) {
+      if (pend.length) actions += `<button class="btn ${done.length ? '' : 'gold'}" id="doBacklog">สรุปวันที่ค้าง (${pend.length} วัน)</button>`;
+      if (done.length >= 2) actions += `<button class="btn ${sum ? '' : 'gold'}" id="doRange">${sum ? 'สรุปภาพรวมใหม่' : 'สรุปภาพรวม'}</button>`;
+    }
   } else {
-    const ref = ids => (ids || []).filter(id => S.msgs.has(String(id))).map(id =>
-      `<a href="#m${esc(id)}" data-jump="${esc(id)}">${esc(hhmm(S.msgs.get(String(id)).time))} ${esc(S.msgs.get(String(id)).user)}</a>`).join('');
+    const list = S.byDay[S.day];
+    title = S.day === T.UNKNOWN_DAY ? S.day : dayLabel(S.day);
+    info = `${list.length} ข้อความ · ${list.reduce((a, m) => a + m.imgs.filter(T.isData).length, 0)} รูป`;
+    if (sample) {
+      actions = `<button class="btn ${sum ? '' : 'gold'}" id="doSum">${sum ? 'สรุปใหม่' : 'สรุปวันนี้'}</button>`;
+      if (pend.length > 1) actions += `<button class="btn" id="doBacklog">สรุปวันที่ค้าง (${pend.length} วัน)</button>`;
+    }
+  }
+  if (S.busy) actions = '';
+  const head = `<div class="sumhead"><h2>${esc(title)}</h2><span class="muted small">${esc(info)}</span><div class="actions">${actions}</div></div>`;
+  if (S.busy) { el.innerHTML = head + `<div class="status" id="sumStatus">${esc(S.busy === true ? 'กำลังอ่านแชท...' : S.busy)}</div>`; return; }
+  if (!sum) {
+    el.innerHTML = head + `<p class="status">${!sample
+      ? 'การสรุปด้วย AI ใช้ได้เมื่อเปิดหน้านี้ผ่าน Claude ตอนนี้ยังอ่านข้อความ ค้นหา และกด ★ เก็บเองได้ตามปกติ'
+      : all ? 'สรุปรายวันให้ครบก่อน (กด “สรุปวันที่ค้าง”) แล้วกด “สรุปภาพรวม” เพื่อดูประเด็นและวิธีเทรดที่คุยต่อเนื่องหลายวัน'
+      : 'กด “สรุปวันนี้” เพื่อให้ AI อ่านข้อความและรูปของวันนี้ แล้วสรุปประเด็น วิธีเทรดที่มีคนแชร์ และคัดข้อความที่น่าเก็บให้'}</p>`;
+  } else {
+    const ref = ids => (ids || []).filter(id => S.msgs.has(String(id))).map(id => {
+      const m = S.msgs.get(String(id));
+      return `<a href="#m${esc(id)}" data-jump="${esc(id)}">${esc(T.hhmm(m.time))} ${esc(m.user)}</a>`;
+    }).join('');
+    const dayRefs = days => (days || []).filter(d => S.byDay[d]).map(d => `<button data-goday="${esc(d)}">${esc(dayLabel(d))}</button>`).join('');
     el.innerHTML = head + `<p class="overview">${esc(sum.overview)}</p>
       ${sum.topics?.length ? `<div class="topics">${sum.topics.map(t => `<div class="topic"><h3>${esc(t.title)}</h3><ul>${(t.points || []).map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>`).join('')}</div>` : ''}
-      ${sum.methods?.length ? `<div class="methods"><h3>วิธีเทรดที่มีคนแชร์</h3>${sum.methods.map(m => `<div class="method"><b>${esc(m.name)}</b><div>${esc(m.detail)}</div><div class="refs">${ref(m.ids)}</div></div>`).join('')}</div>` : ''}
+      ${sum.methods?.length ? `<div class="methods"><h3>วิธีเทรดที่มีคนแชร์</h3>${sum.methods.map(m => `<div class="method"><b>${esc(m.name)}</b><div>${esc(m.detail)}</div><div class="refs">${all ? dayRefs(m.days) : ref(m.ids)}</div></div>`).join('')}</div>` : ''}
       ${sum.questions?.length ? `<div class="methods"><h3>คำถามที่ยังค้าง</h3><ul>${sum.questions.map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>` : ''}
-      ${sum.truncated ? '<p class="muted small">วันนี้ข้อความยาวมาก AI อ่านได้ไม่ครบทุกข้อความ</p>' : ''}`;
+      ${sum.truncated ? '<p class="muted small">วันนี้ข้อความยาวมาก AI อ่านได้ไม่ครบทุกข้อความ</p>' : ''}
+      ${all && sum.days ? `<p class="muted small">สรุปจาก ${sum.days.length} วันที่สรุปรายวันไว้</p>` : ''}`;
     el.querySelectorAll('[data-jump]').forEach(a => a.onclick = e => { e.preventDefault(); jump(a.dataset.jump); });
+    el.querySelectorAll('[data-goday]').forEach(b => b.onclick = () => { S.day = b.dataset.goday; renderDays(); renderDay(); });
   }
-  const b = $('doSum'); if (b) b.onclick = summarize;
+  if ($('doSum')) $('doSum').onclick = () => runSummary([S.day]);
+  if ($('doBacklog')) $('doBacklog').onclick = () => runSummary(pendingDays());
+  if ($('doRange')) $('doRange').onclick = summarizeRange;
 }
 
-const isData = s => typeof s === 'string' && s.startsWith('data:image');
 function dataToBlob(u) {
   const [h, b] = u.split(','); const bin = atob(b); const a = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
   return new Blob([a], { type: h.slice(5).split(';')[0] });
 }
+const errText = e => ({ not_granted: 'ยังไม่ได้อนุญาตให้ใช้ Claude สำหรับหน้านี้', rate_limited: 'ใช้งานถี่เกินไป ลองอีกครั้งภายหลัง',
+  prompt_too_large: 'ข้อความยาวเกินไป', invalid_json: 'AI ตอบในรูปแบบที่อ่านไม่ได้ ลองกดสรุปใหม่',
+  image_rejected: 'มีรูปที่ส่งให้ AI ไม่ได้', cancelled: '' }[e?.code] ?? 'สรุปไม่สำเร็จ ลองอีกครั้ง');
+function setBusy(t) { S.busy = t; renderSummary(); }
 
-async function summarize() {
-  if (!sample || S.busy) return;
-  const list = S.byDay[S.day];
-  const pics = [];
-  const lines = [];
-  let bytes = 0, truncated = false;
-  for (const m of list) {
-    let tag = '';
-    for (const u of m.imgs) if (isData(u) && pics.length < imgLimit) { pics.push(u); tag += ` [รูป R${pics.length}]`; }
-    const line = `#${m.id} [${hhmm(m.time)}] ${m.user}: ${m.reply ? '(ตอบ: ' + m.reply.slice(0, 80) + ') ' : ''}${m.text}${tag}`;
-    bytes += new Blob([line]).size;
-    if (bytes > 200000) { truncated = true; break; }
-    lines.push(line);
-  }
-  const prompt = `คุณช่วยสรุปห้องแชท Discord ที่สมาชิกคุยเรื่องวิธีเทรดและการเรียนเทรด ผู้อ่านไม่มีเวลาอ่านทุกข้อความ
-${pics.length ? `แนบรูปมา ${pics.length} รูป เรียงตามลำดับ R1..R${pics.length} ตามป้าย [รูป Rn] ในข้อความ อ่านรายละเอียดในรูป (กราฟ ระดับราคา อินดิเคเตอร์ จุดเข้า-ออก) แล้วนำมาใช้ในสรุปด้วย` : ''}
-ตอบเป็นภาษาไทย เป็น JSON เท่านั้น ตามรูปแบบนี้:
-{"overview":"ภาพรวม 2-3 ประโยค",
- "topics":[{"title":"หัวข้อ","points":["ประเด็นสั้นๆ"]}],
- "methods":[{"name":"ชื่อวิธี/setup","detail":"เงื่อนไขเข้า ออก ตัดขาดทุน timeframe อินดิเคเตอร์ ตามที่มีในแชท","ids":["id ข้อความต้นทาง"]}],
- "keep":[{"id":"id ข้อความ","why":"เหตุผลสั้นๆ ที่ควรเก็บ"}],
- "questions":["คำถามสำคัญที่ยังไม่มีคำตอบ"]}
-กติกา: topics ไม่เกิน 6 หัวข้อ, methods เฉพาะที่มีรายละเอียดจริงในแชท, keep ไม่เกิน 20 ข้อความที่มีความรู้หรือวิธีที่นำไปใช้ได้ (ไม่รวมคำทักทายหรือแชทเล่น), อย่าแต่งข้อมูลที่ไม่มีในแชท, id ต้องคัดลอกจากเลขหลัง # เท่านั้น
-
-ข้อความ (${lines.length} ข้อความ${truncated ? ' ตัดท้ายเพราะยาวเกิน' : ''}):
-${lines.join('\n')}`;
-  S.busy = true; renderSummary();
+async function summarizeDay(day, label) {
+  const dg = T.digest(S.byDay[day], { imgLimit });
+  const res = await sample.json(T.dayPrompt(dg), { images: dg.pics.map(dataToBlob), cache: false,
+    onText: () => { const s = $('sumStatus'); if (s) s.textContent = label + 'กำลังเขียนสรุป...'; } });
+  const sum = { ...T.cleanSummary(res), truncated: dg.truncated, day, channel: S.channel, kind: 'summary', at: Date.now() };
+  S.summaries[sumKey(day)] = sum;
+  try { await putDoc(sumKey(day), sum); } catch { toast('บันทึกสรุปไว้ถาวรไม่สำเร็จ แต่ยังอ่านได้ในหน้านี้'); }
+}
+// Sequential on purpose: one request at a time keeps us under rate limits and lets a failure stop the run.
+async function runSummary(days) {
+  if (!sample || S.busy || !days.length) return;
+  let done = 0;
   try {
-    const res = await sample.json(prompt, { images: pics.map(dataToBlob), cache: false,
-      onText: () => { const s = $('sumStatus'); if (s) s.textContent = 'กำลังเขียนสรุป...'; } });
-    const sum = {
-      overview: String(res.overview || ''), topics: Array.isArray(res.topics) ? res.topics : [],
-      methods: Array.isArray(res.methods) ? res.methods : [], questions: Array.isArray(res.questions) ? res.questions : [],
-      keep: (Array.isArray(res.keep) ? res.keep : []).map(k => ({ id: String(k.id).replace('#', ''), why: String(k.why || '') })),
-      truncated, day: S.day, channel: S.channel, kind: 'summary', at: Date.now()
-    };
-    S.summaries[sumKey()] = sum;
-    if (col) col.doc(sumKey()).set(sum).catch(() => toast('บันทึกสรุปไว้ถาวรไม่สำเร็จ แต่ยังอ่านได้ในหน้านี้'));
+    for (const d of days) {
+      const label = days.length > 1 ? `(${done + 1}/${days.length}) ${dayLabel(d)} · ` : '';
+      setBusy(label + 'กำลังอ่านแชท...');
+      await summarizeDay(d, label);
+      done++;
+      renderDays();
+    }
+    if (days.length > 1) toast('สรุปเสร็จ ' + done + ' วัน');
   } catch (e) {
-    const msg = { not_granted: 'ยังไม่ได้อนุญาตให้ใช้ Claude สำหรับหน้านี้', rate_limited: 'ใช้งานถี่เกินไป ลองอีกครั้งภายหลัง',
-      prompt_too_large: 'ข้อความวันนี้ยาวเกินไป', invalid_json: 'AI ตอบในรูปแบบที่อ่านไม่ได้ ลองกดสรุปใหม่',
-      image_rejected: 'มีรูปที่ส่งให้ AI ไม่ได้', cancelled: '' }[e?.code] ?? 'สรุปไม่สำเร็จ ลองอีกครั้ง';
-    if (msg) toast(msg);
+    const m = errText(e);
+    if (m) toast(done ? `สรุปได้ ${done} วัน แล้วหยุด: ${m}` : m);
   } finally { S.busy = false; renderDays(); renderSummary(); renderMsgs(); }
+}
+async function summarizeRange() {
+  if (!sample || S.busy) return;
+  const daySums = S.days.filter(d => S.summaries[sumKey(d)]).map(day => ({ day, sum: S.summaries[sumKey(day)] }));
+  if (daySums.length < 2) return;
+  setBusy(`กำลังรวมสรุป ${daySums.length} วัน...`);
+  try {
+    const res = await sample.json(T.rangePrompt(daySums), { cache: false });
+    const sum = { ...T.cleanSummary(res), day: ALL, days: daySums.map(x => x.day), channel: S.channel, kind: 'summary', at: Date.now() };
+    S.summaries[sumKey(ALL)] = sum;
+    try { await putDoc(sumKey(ALL), sum); } catch { toast('บันทึกสรุปไว้ถาวรไม่สำเร็จ แต่ยังอ่านได้ในหน้านี้'); }
+  } catch (e) { const m = errText(e); if (m) toast(m); }
+  finally { S.busy = false; renderDays(); renderSummary(); }
 }
 
 /* ---------- messages ---------- */
-['q', 'onlyKeep', 'onlyImg'].forEach(id => $(id).addEventListener('input', renderMsgs));
+['q', 'onlyKeep', 'onlyImg', 'allDays'].forEach(id => $(id).addEventListener('input', renderMsgs));
+const MAX_ROWS = 400;
 function renderMsgs() {
-  const sum = S.summaries[sumKey()];
-  const keep = new Map((sum?.keep || []).map(k => [k.id, k.why]));
-  const q = $('q').value.trim().toLowerCase();
+  if (!S.days.length || S.day === ALL) return;
+  const q = $('q').value.trim();
+  const across = $('allDays').checked;
+  const days = across ? S.days : [S.day];
   const saved = new Set(S.notes.map(n => n.msgId));
-  const list = S.byDay[S.day].filter(m =>
-    (!$('onlyKeep').checked || keep.has(m.id)) &&
-    (!$('onlyImg').checked || m.imgs.length) &&
-    (!q || (m.text + ' ' + m.user).toLowerCase().includes(q)));
-  $('msgs').innerHTML = list.length ? list.map(m => `
-    <div class="msg ${keep.has(m.id) ? 'keep' : ''}" id="m${esc(m.id)}">
-      <time>${esc(hhmm(m.time))}</time>
+  const rows = [];
+  let total = 0;
+  for (const d of days) {
+    const keep = keepMap(d);
+    const hits = S.byDay[d].filter(m => (!$('onlyKeep').checked || keep.has(m.id)) && (!$('onlyImg').checked || m.imgs.length) && T.matches(m, q));
+    if (!hits.length) continue;
+    total += hits.length;
+    if (rows.length >= MAX_ROWS) continue;
+    if (across) rows.push(`<div class="dayhdr">${esc(d === T.UNKNOWN_DAY ? d : dayLabel(d))} · ${hits.length}</div>`);
+    for (const m of hits.slice(0, MAX_ROWS - rows.length)) rows.push(msgRow(m, keep, saved, across && d !== S.day ? d : ''));
+  }
+  const more = total > MAX_ROWS ? `<p class="status" style="margin:0">แสดงบางส่วนจาก ${total.toLocaleString()} ข้อความ พิมพ์คำค้นให้เจาะจงขึ้น</p>` : '';
+  $('msgs').innerHTML = rows.length ? rows.join('') + more : '<p class="status" style="margin:0">ไม่มีข้อความที่ตรงกับตัวกรอง</p>';
+  $('msgs').querySelectorAll('.star').forEach(b => b.onclick = () => toggleSave(b.dataset.id, b));
+  $('msgs').querySelectorAll('.imgs img').forEach(i => i.onclick = () => zoom(i.src));
+  $('msgs').querySelectorAll('[data-goto]').forEach(a => a.onclick = e => {
+    e.preventDefault(); S.day = a.dataset.goto; $('allDays').checked = false; renderDays(); renderDay(); jump(a.dataset.id);
+  });
+}
+function msgRow(m, keep, saved, otherDay) {
+  const t = esc(T.hhmm(m.time));
+  const imgs = m.imgs.map((u, i) => (T.isData(u) ? `<img src="${u}" alt="รูปจากแชท" loading="lazy">` : '') +
+    (m.drive[i] ? `<a href="${esc(m.drive[i])}" target="_blank" rel="noopener">เปิดใน Drive</a>`
+      : T.isData(u) || !u ? '' : `<a href="${esc(u)}" target="_blank" rel="noopener">รูป (ลิงก์ Discord อาจหมดอายุ)</a>`)).join('');
+  return `<div class="msg ${keep.has(m.id) ? 'keep' : ''}" id="m${esc(m.id)}">
+      <time>${otherDay ? `<a href="#m${esc(m.id)}" data-goto="${esc(otherDay)}" data-id="${esc(m.id)}" title="ไปที่วันนั้น">${t}</a>` : t}</time>
       <div><div class="u">${esc(m.user)}</div>
         ${m.reply ? `<div class="muted small">↳ ${esc(m.reply.slice(0, 120))}</div>` : ''}
         ${m.text ? `<div class="t">${esc(m.text)}</div>` : ''}
         ${keep.has(m.id) ? `<div class="why">AI แนะนำให้เก็บ: ${esc(keep.get(m.id))}</div>` : ''}
-        ${m.imgs.length ? `<div class="imgs">${m.imgs.map((u, i) => (isData(u) ? `<img src="${u}" alt="รูปจากแชท" loading="lazy">` : '') + (m.drive[i] ? `<a href="${esc(m.drive[i])}" target="_blank" rel="noopener">เปิดใน Drive</a>` : isData(u) ? '' : `<a href="${esc(u)}" target="_blank" rel="noopener">รูป (ลิงก์ Discord อาจหมดอายุ)</a>`)).join('')}</div>` : ''}
+        ${imgs ? `<div class="imgs">${imgs}</div>` : ''}
       </div>
       <button class="star ${saved.has(m.id) ? 'on' : ''}" data-id="${esc(m.id)}" aria-label="${saved.has(m.id) ? 'เก็บแล้ว' : 'เก็บลงสมุด'}" title="เก็บลงสมุดบันทึก">★</button>
-    </div>`).join('') : '<p class="status" style="margin:0">ไม่มีข้อความที่ตรงกับตัวกรอง</p>';
-  $('msgs').querySelectorAll('.star').forEach(b => b.onclick = () => toggleSave(b.dataset.id, b));
-  $('msgs').querySelectorAll('.imgs img').forEach(i => i.onclick = () => zoom(i.src));
+    </div>`;
 }
 function jump(id) {
   $('onlyKeep').checked = false; $('onlyImg').checked = false; $('q').value = ''; renderMsgs();
@@ -461,72 +521,110 @@ function jump(id) {
 }
 
 /* ---------- saving to notebook ---------- */
+// claude db documents are size-limited, so big images go to the asset store there;
+// the local IndexedDB copy can hold the data URLs directly.
+async function storeImgs(urls) {
+  const out = [];
+  for (const u of urls) {
+    if (col && assets) { try { const r = await assets.upload(dataToBlob(u)); out.push({ asset: r.id }); continue; } catch {} }
+    if (!col || u.length < 180000) out.push({ data: u });
+  }
+  return out;
+}
 async function toggleSave(id, btn) {
   const existing = S.notes.find(n => n.msgId === id);
   if (existing) { if (confirm('เอาข้อความนี้ออกจากสมุดบันทึก?')) await removeNote(existing); return; }
   const m = S.msgs.get(id); if (!m) return;
   btn.disabled = true;
-  const why = S.summaries[sumKey()]?.keep.find(k => k.id === id)?.why || '';
-  const note = { kind: 'note', msgId: id, user: m.user, time: m.time, channel: S.channel, text: m.text, reply: m.reply, memo: why, imgs: [], drive: m.drive.filter(Boolean), at: Date.now() };
-  for (const u of m.imgs.filter(isData)) {
-    if (assets) { try { const r = await assets.upload(dataToBlob(u)); note.imgs.push({ asset: r.id }); continue; } catch {} }
-    if (u.length < 180000) note.imgs.push({ data: u });
-  }
-  if (col) {
-    try { await col.doc('n_' + id).set(note); toast('เก็บลงสมุดแล้ว'); }
-    catch { toast('บันทึกไม่สำเร็จ'); }
-  } else { S.notes.push({ ...note, _id: 'n_' + id }); refreshNotes(); toast('เก็บแล้ว (เฉพาะในหน้านี้ เพราะไม่ได้เปิดผ่าน Claude)'); }
+  const why = keepMap(T.dayKey(m.time)).get(id) || '';
+  const note = { kind: 'note', msgId: id, user: m.user, time: m.time, channel: S.channel, text: m.text, reply: m.reply,
+    memo: why, tags: [], imgs: await storeImgs(m.imgs.filter(T.isData)), drive: m.drive.filter(Boolean), at: Date.now() };
+  try { await putDoc('n_' + id, note); toast(col || local.db ? 'เก็บลงสมุดแล้ว' : 'เก็บแล้ว (เฉพาะในหน้านี้ ปิดหน้าแล้วจะหาย)'); }
+  catch { toast('บันทึกไม่สำเร็จ'); }
   btn.disabled = false;
 }
 async function removeNote(n) {
-  if (col) { try { await col.doc(n._id).delete(); } catch { toast('ลบไม่สำเร็จ'); return; }
-    if (assets) for (const i of n.imgs || []) if (i.asset) assets.delete(i.asset).catch(() => {}); }
-  else { S.notes = S.notes.filter(x => x !== n); refreshNotes(); }
+  try { await delDoc(n._id); } catch { toast('ลบไม่สำเร็จ'); return; }
+  if (col && assets) for (const i of n.imgs || []) if (i.asset) assets.delete(i.asset).catch(() => {});
   toast('เอาออกจากสมุดแล้ว');
-}
-function refreshNotes() {
-  $('libCount').textContent = S.notes.length ? '(' + S.notes.length + ')' : '';
-  if (!$('reader').hidden && S.day) renderMsgs();
-  if (!$('library').hidden) renderLib();
 }
 const imgSrc = i => i.asset ? '/_blob/' + i.asset : i.data;
 
 $('libQ').addEventListener('input', renderLib);
 function renderLib() {
   const q = $('libQ').value.trim().toLowerCase();
+  const counts = {};
+  for (const n of S.notes) for (const t of n.tags || []) counts[t] = (counts[t] || 0) + 1;
+  const tags = Object.keys(counts).sort();
+  if (S.tag && !counts[S.tag]) S.tag = '';
+  $('tagBar').innerHTML = tags.length ? `<button class="chip" data-tag="" aria-pressed="${!S.tag}">ทั้งหมด</button>` +
+    tags.map(t => `<button class="chip" data-tag="${esc(t)}" aria-pressed="${S.tag === t}">#${esc(t)} ${counts[t]}</button>`).join('') : '';
+  $('tagBar').querySelectorAll('.chip').forEach(b => b.onclick = () => { S.tag = b.dataset.tag; renderLib(); });
+  $('storeInfo').textContent = col ? '' : local.db
+    ? 'สมุดนี้เก็บไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น กด “สำรองสมุด” เป็นระยะ เผื่อข้อมูลเบราว์เซอร์ถูกล้าง'
+    : 'เบราว์เซอร์นี้เก็บข้อมูลถาวรไม่ได้ สมุดจะหายเมื่อปิดหน้า กด “สำรองสมุด” ก่อนปิด';
   const list = [...S.notes].sort((a, b) => (b.time || '').localeCompare(a.time || ''))
-    .filter(n => !q || [n.text, n.user, n.memo, n.channel].join(' ').toLowerCase().includes(q));
+    .filter(n => (!S.tag || (n.tags || []).includes(S.tag)) &&
+      (!q || [n.text, n.user, n.memo, n.channel, ...(n.tags || []).map(t => '#' + t)].join(' ').toLowerCase().includes(q)));
   $('libList').innerHTML = list.length ? list.map(n => `
     <div class="note" data-id="${esc(n._id)}">
-      <div class="meta"><b>${esc(n.user)}</b><span>${esc(n.time ? new Date(n.time).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '')}</span><span>${esc(n.channel)}</span></div>
+      <div class="meta"><b>${esc(n.user)}</b><span>${esc(n.time ? fmtTime(n.time) : '')}</span><span>${esc(n.channel)}</span></div>
+      ${n.tags?.length ? `<div class="tags">${n.tags.map(t => `<span>#${esc(t)}</span>`).join('')}</div>` : ''}
       ${n.reply ? `<div class="muted small">↳ ${esc(n.reply.slice(0, 120))}</div>` : ''}
       <div class="t">${esc(n.text)}</div>
       ${n.imgs?.length ? `<div class="imgs">${n.imgs.map(i => `<img src="${esc(imgSrc(i))}" alt="รูปที่บันทึกไว้" loading="lazy">`).join('')}</div>` : ''}
       ${n.drive?.length ? `<div class="small">${n.drive.map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener">รูป ${i + 1} ใน Drive</a>`).join(' · ')}</div>` : ''}
       <textarea placeholder="จดโน้ตของคุณ เช่น ใช้กับ TF ไหน หรือเงื่อนไขที่อยากทดสอบ" aria-label="โน้ต">${esc(n.memo)}</textarea>
+      <input class="tagin" placeholder="แท็ก เช่น #m15 #breakout #xauusd" aria-label="แท็ก" value="${esc((n.tags || []).map(t => '#' + t).join(' '))}">
       <div class="row"><button class="btn small save">บันทึกโน้ต</button><button class="btn small del">เอาออก</button></div>
     </div>`).join('')
-    : `<p class="status">${S.notes.length ? 'ไม่พบบันทึกที่ตรงกับคำค้น' : 'ยังไม่มีบันทึก กด ★ ที่ข้อความในหน้าอ่านสรุปเพื่อเก็บไว้ที่นี่'}</p>`;
+    : `<p class="status">${S.notes.length ? 'ไม่พบบันทึกที่ตรงกับคำค้นหรือแท็ก' : 'ยังไม่มีบันทึก กด ★ ที่ข้อความในหน้าอ่านสรุปเพื่อเก็บไว้ที่นี่'}</p>`;
   $('libList').querySelectorAll('.note').forEach(el => {
     const n = S.notes.find(x => x._id === el.dataset.id);
     el.querySelector('.save').onclick = async () => {
-      const memo = el.querySelector('textarea').value;
-      if (col) { try { await col.doc(n._id).update({ memo }); toast('บันทึกโน้ตแล้ว'); } catch { toast('บันทึกไม่สำเร็จ'); } }
-      else { n.memo = memo; toast('บันทึกโน้ตแล้ว'); }
+      const patch = { memo: el.querySelector('textarea').value, tags: T.parseTags(el.querySelector('.tagin').value) };
+      try { await patchDoc(n._id, patch); toast('บันทึกโน้ตแล้ว'); } catch { toast('บันทึกไม่สำเร็จ'); }
     };
     el.querySelector('.del').onclick = () => { if (confirm('เอาข้อความนี้ออกจากสมุดบันทึก?')) removeNote(n); };
     el.querySelectorAll('img').forEach(i => i.onclick = () => zoom(i.src));
   });
 }
 
-let downloads = null;
-$('exportMd').onclick = async () => {
+$('exportMd').onclick = () => {
   if (!S.notes.length) { toast('ยังไม่มีบันทึก'); return; }
-  const md = '# สมุดบันทึกห้องเทรด\n\n' + [...S.notes].sort((a, b) => (a.time || '').localeCompare(b.time || '')).map(n =>
-    `## ${n.user} · ${n.time ? new Date(n.time).toLocaleString('th-TH') : ''}\n\n${n.text}\n\n${n.memo ? '> โน้ต: ' + n.memo + '\n\n' : ''}${n.drive?.length ? n.drive.map((u, i) => `[รูป ${i + 1}](${u})`).join(' ') + '\n\n' : n.imgs?.length ? '_มีรูป ' + n.imgs.length + ' รูป (ดูในสมุดบันทึก)_\n\n' : ''}`).join('---\n\n');
-  if (!downloads) { toast('ดาวน์โหลดได้เมื่อเปิดหน้านี้ผ่าน Claude'); return; }
-  try { await downloads.save({ filename: 'trade-notes.md', data: md }); } catch { toast('ดาวน์โหลดไม่สำเร็จ'); }
+  saveFile('trade-notes.md', T.notesMarkdown(S.notes, fmtTime), 'text/markdown');
 };
+const blobToData = b => new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => ok(''); r.readAsDataURL(b); });
+$('backup').onclick = async () => {
+  if (!S.notes.length && !Object.keys(S.summaries).length) { toast('ยังไม่มีอะไรให้สำรอง'); return; }
+  toast('กำลังเตรียมไฟล์สำรอง...');
+  const notes = [];
+  for (const n of S.notes) {
+    const imgs = [];
+    for (const i of n.imgs || []) {
+      if (i.data) imgs.push({ data: i.data });
+      else if (i.asset) { try { const d = await blobToData(await (await fetch(imgSrc(i))).blob()); if (d) imgs.push({ data: d }); } catch {} }
+    }
+    const { _id, ...rest } = n;
+    notes.push({ ...rest, _id, imgs });
+  }
+  const data = { kind: 'tcn-backup', version: 1, exportedAt: new Date().toISOString(), notes, summaries: S.summaries };
+  saveFile('trade-notebook-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(data), 'application/json');
+};
+async function restoreBackup(data) {
+  let n = 0;
+  for (const note of data.notes || []) {
+    if (!note || !note.msgId || S.notes.some(x => x._id === note._id)) continue;
+    const { _id, ...rest } = note;
+    rest.imgs = await storeImgs((note.imgs || []).map(i => i.data).filter(T.isData));
+    try { await putDoc(_id || 'n_' + note.msgId, rest); n++; } catch {}
+  }
+  for (const [k, v] of Object.entries(data.summaries || {})) {
+    if (v && v.kind === 'summary' && !S.summaries[k]) { S.summaries[k] = v; try { await putDoc(k, v); } catch {} }
+  }
+  refreshAll();
+  toast('นำเข้าสำรอง: บันทึก ' + n + ' รายการ');
+}
 
 function zoom(src) { const l = $('lightbox'); l.querySelector('img').src = src; l.classList.add('on'); }
 $('lightbox').onclick = () => $('lightbox').classList.remove('on');
@@ -534,30 +632,28 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') $('lightbox'
 
 /* ---------- runtime capabilities ---------- */
 (async () => {
-  if (!window.claude?.use) return;
-  sample = await claude.use('sample');
-  if (sample) { try { const l = await sample.limits(); imgLimit = l.images ? Math.min(l.images.maxCount, 20) : 0; } catch { imgLimit = 0; } }
-  downloads = await claude.use('downloads');
-  assets = await claude.use('assets');
-  db = await claude.use('db');
-  const user = await claude.use('user');
-  if (db && user) {
-    try {
-      uid = await user.id();
-      col = db.collection('data/users/' + uid);
-      col.onSnapshot(snap => {
-        S.notes = []; 
-        for (const d of snap.docs) {
-          const v = d.data(); if (!v) continue;
-          if (v.kind === 'note') S.notes.push({ ...v, _id: d.id });
-          else if (v.kind === 'summary') S.summaries[d.id] = v;
-        }
-        refreshNotes();
-        if (S.days.length) { renderDays(); renderSummary(); }
-      }, () => toast('โหลดสมุดบันทึกไม่สำเร็จ'));
-    } catch { col = null; }
+  if (window.claude?.use) {
+    sample = await claude.use('sample');
+    if (sample) { try { const l = await sample.limits(); imgLimit = l.images ? Math.min(l.images.maxCount, 20) : 0; } catch { imgLimit = 0; } }
+    downloads = await claude.use('downloads');
+    assets = await claude.use('assets');
+    const db = await claude.use('db');
+    const user = await claude.use('user');
+    if (db && user) {
+      try {
+        col = db.collection('data/users/' + await user.id());
+        col.onSnapshot(snap => {
+          S.notes = [];
+          for (const d of snap.docs) applyDoc(d.id, d.data());
+          refreshAll();
+        }, () => toast('โหลดสมุดบันทึกไม่สำเร็จ'));
+      } catch { col = null; }
+    }
   }
-  if (S.days.length) renderSummary();
+  if (!col && await local.open()) {
+    try { for (const d of await local.all() || []) applyDoc(d._id, d); } catch {}
+  }
+  refreshAll();
 })();
 </script>
 </body>

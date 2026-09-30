@@ -1,0 +1,11 @@
+{
+  "name": "notebook-trading",
+  "private": true,
+  "description": "สมุดสรุปห้องเทรด: Discord chat collector, AI day summaries and a searchable notebook",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0"
+  }
+}

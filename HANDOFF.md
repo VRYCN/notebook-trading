@@ -12,11 +12,14 @@ Wants: (1) collect messages + images by timestamp, (2) AI summary per day, (3) s
 - User's work PC: no admin rights, cannot install software/extensions. Browser-only paths preferred.
 - UI/output language: Thai.
 
-## Files in this folder
+## Files in this repo
 | File | Role |
 |---|---|
-| `trade-chat-notebook.html` | Published claude.ai artifact (https://claude.ai/artifact/MenCBbv4Eix8XDKA3McqxK). Contains the collector script (const `COLLECTOR`), JSON intake, per-day view, AI summary, ★ notebook. |
-| `apps-script/Code.gs`, `apps-script/Index.html` | Google Apps Script web app (user deploys under own account, "Only myself"). Uploads images to `Drive/Discord-Trade/<channel>/<YYYY-MM-DD>/HHMM_user_msgid_n.ext`, sets file description = message text, writes `<name>-drive.json` with `drive[]` links. Skips existing filenames. |
+| `trade-chat-notebook.html` | The notebook page (UI only). Published earlier as claude.ai artifact https://claude.ai/artifact/MenCBbv4Eix8XDKA3McqxK — **that artifact still runs the old single-file version**; republishing needs `core.js` and `collector.js` passed as supporting `files`. |
+| `core.js` | Pure logic (UMD: `window.TCN` / `require`): Bangkok day keys, snowflake sort, export merge/dedupe, health check, search, AI digest + prompts, Drive naming, tags, Markdown export. |
+| `collector.js` | `tcnCollector()` — the console script. The page shows `'(' + tcnCollector.toString() + ')();'`, so it must stay self-contained. |
+| `apps-script/Code.gs`, `apps-script/Index.html` | Google Apps Script web app (user deploys under own account, "Only myself"). Uploads images to `Drive/Discord-Trade/<channel>/<YYYY-MM-DD>/HHMM_user_msgid_n.ext` (Bangkok time), sets file description = message text, writes `<name>-drive.json` with `drive[]` links. Skips existing filenames. Its naming block mirrors `core.js`; `test/drive-naming.test.js` enforces that. |
+| `test/` | `npm install && npm test` (node:test + jsdom). core logic, Drive naming parity, collector against a Discord-shaped DOM fixture, page smoke test incl. mocked `window.claude`. |
 
 ## Data format (collector → app)
 ```json
@@ -27,23 +30,26 @@ Wants: (1) collect messages + images by timestamp, (2) AI summary per day, (3) s
   }]}
 ```
 
-## Artifact runtime specifics (only relevant if staying on claude.ai artifacts)
-- Capabilities declared: `sample` (AI summary via `sample.json`, images as Blobs, ≤~20/call, ~200KB text cap applied), `db` + `user` (private collection `data/users/<uid>`; docs `kind:"note"` id `n_<msgid>`, `kind:"summary"` id `s_<hash(channel)>_<day>`), `assets` (saved note images), `downloads` (Markdown export).
-- Published page CSP: no remote images, no fetch to other hosts → Drive links shown as links, not thumbnails.
-- Outside claude.ai (e.g. local file / GitHub Pages) `window.claude` is absent: summary disabled, notes kept only in memory. **A Claude Code port must replace these** (see next steps).
+## Runtime / storage
+- Inside claude.ai: capabilities `sample` (AI summary via `sample.json`, images as Blobs, ≤20/call, ~200KB text cap), `db` + `user` (private collection `data/users/<uid>`; docs `kind:"note"` id `n_<msgid>`, `kind:"summary"` id `T.sumKey(channel, day)`; the multi-day overview uses day `*`), `assets` (note images), `downloads`.
+- Outside claude.ai (local file, GitHub Pages): notes + summaries persist in IndexedDB (`trade-chat-notebook`/`docs`), downloads use a Blob link, AI summary is disabled (no `window.claude`).
+- Backup: library → “สำรองสมุด” writes `{kind:"tcn-backup", notes, summaries}` with images inlined as data URLs; dropping that file on the intake restores it (works in both modes, so it also migrates notes between them).
+
+## Done in this round
+- Collector: selectors keyed on the message's own id (`#message-content-<id>` etc.) — the old prefix selector picked up the reply preview's text, which reuses `message-content-<repliedId>`. Accessories-scoped images, emoji/avatars/reply thumbnails excluded, `data-list-item-id` row fallback, late-rendered fields filled on later passes, red badge + `__tcn.diag()` when nothing/partial data is captured, robust channel name from `document.title`.
+- App: merge keeps Drive links and data-URL images when a raw export is loaded after a `-drive.json`; day grouping fixed to Asia/Bangkok; continuation authors filled after merging files; per-file health warnings.
+- Cross-day: “ค้นทุกวัน” search (multi-term AND), “สรุปวันที่ค้าง” (sequential per-day summaries), “ภาพรวมทุกวัน” (overview built from per-day summaries, text only), note tags with filter chips, tags in Markdown export.
 
 ## Known risks / unverified
-- Collector DOM selectors (`li[id^="chat-messages-"]`, `[id^="message-content-"]`, `[class*="username_"]`, `[class*="imageWrapper"]`, `[class*="mediaAttachmentsContainer"]`, `time[datetime]`) are untested against the live Discord build; class names change often.
-- `fetch()` of `media.discordapp.net` from discord.com for data-URL conversion may fail on CORS → falls back to raw URL (Apps Script then fetches it server-side via UrlFetchApp).
-- Grouped (continuation) messages have no username; filled from previous message after sorting.
-- Nothing end-to-end tested with real exports yet.
+- Collector DOM selectors are tested only against a hand-built fixture (`test/collector.test.js`), not the live Discord build. First real run: check the badge colour and `__tcn.diag()`; if wrong, fix `read()` in `collector.js` and update the fixture to the real markup.
+- `fetch()` of `media.discordapp.net` from discord.com for data-URL conversion may fail on CORS → falls back to raw URL (Apps Script then fetches it server-side via UrlFetchApp, same day only).
+- Summary/backlog flow tested only with a mocked `sample`; real prompt quality unverified.
 
-## Suggested next steps (for Claude Code)
-1. Test collector on a real channel; fix selectors; add a small selector-health check (warn if 0 messages captured).
-2. Decide hosting: keep the claude.ai artifact, or port to a standalone app (GitHub Pages under user's account VRYCN, or a local Python/Flask tool) using the Anthropic API directly + IndexedDB/SQLite for notes. If porting, keep API key out of client code.
-3. Optionally merge the Drive step into the app flow (e.g. Apps Script also serves the notebook, or a Python script using Drive API on the user's personal PC).
-4. Cross-day features: multi-day backlog summary, search across all days, tag notes by setup/timeframe.
-5. Write tests for JSON merge/dedupe and day grouping (local timezone Asia/Bangkok).
+## Next steps
+1. Run the collector on the real channel; adjust selectors + fixture.
+2. Hosting decision (user's call): republish the artifact with the new files, or GitHub Pages under VRYCN (no AI summary there unless a backend holding the API key is added — never put the key in client code).
+3. Optionally merge the Drive step into the app flow (Apps Script serving the notebook, or a Python script with the Drive API on the user's personal PC).
+4. Apps Script: batch several images per `google.script.run` call and cache folder lookups if 300+ images/day is slow.
 
 ## Suggested skills
 - `frontend-design` — any UI changes.

@@ -25,7 +25,10 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const pad = n => String(n).padStart(2, '0');
+// --- naming: keep in sync with driveName/driveDay in core.js (test/drive-naming.test.js checks) ---
+const TZ = 'Asia/Bangkok';
+const partsFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const parts = iso => { if (!iso) return null; const d = new Date(iso); if (isNaN(d)) return null; const p = {}; for (const x of partsFmt.formatToParts(d)) p[x.type] = x.value; return p; };
 const clean = s => String(s || '').replace(/[\\/:*?"<>|#]/g, '_').trim().slice(0, 60) || 'chat';
 const ext = src => {
   const d = String(src).match(/^data:image\/(\w+)/);
@@ -33,6 +36,9 @@ const ext = src => {
   const u = String(src).split('?')[0].match(/\.(png|jpe?g|gif|webp)$/i);
   return u ? u[1].toLowerCase().replace('jpeg', 'jpg') : 'jpg';
 };
+const driveDay = m => { const p = parts(m.time); return p ? `${p.year}-${p.month}-${p.day}` : 'unknown'; };
+const driveName = (m, i, src) => { const p = parts(m.time); return `${p ? p.hour + p.minute : '0000'}_${clean(m.user)}_${m.id}_${i + 1}.${ext(src)}`; };
+// --- end naming ---
 const call = (fn, ...a) => new Promise((ok, no) =>
   google.script.run.withSuccessHandler(ok).withFailureHandler(no)[fn](...a));
 const log = (t, bad) => { const d = document.createElement('div'); d.textContent = t; if (bad) d.className = 'err'; $('log').prepend(d); };
@@ -41,7 +47,8 @@ $('file').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   let data;
   try { data = JSON.parse(await f.text()); } catch { $('status').textContent = 'อ่านไฟล์ไม่ได้'; return; }
-  const msgs = Array.isArray(data) ? data : data.messages;
+  const msgs = Array.isArray(data) ? data : data && data.messages;
+  if (!Array.isArray(msgs)) { $('status').textContent = 'ไฟล์นี้ไม่ใช่ไฟล์จากสคริปต์เก็บแชท'; return; }
   const channel = clean(data.channel);
   const jobs = [];
   for (const m of msgs) {
@@ -52,10 +59,8 @@ $('file').onchange = async e => {
   $('bar').hidden = false; $('bar').max = jobs.length; $('bar').value = 0;
   let ok = 0, fail = 0;
   for (const j of jobs) {
-    const d = new Date(j.m.time);
-    const day = isNaN(d) ? 'unknown' : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const hm = isNaN(d) ? '0000' : pad(d.getHours()) + pad(d.getMinutes());
-    const name = `${hm}_${clean(j.m.user)}_${j.m.id}_${j.i + 1}.${ext(j.src)}`;
+    const day = driveDay(j.m);
+    const name = driveName(j.m, j.i, j.src);
     $('status').textContent = `กำลังอัปโหลด ${ok + fail + 1}/${jobs.length}`;
     try {
       j.m.drive[j.i] = await call('saveImage', { channel, day, name, src: j.src, desc: `${j.m.user}: ${j.m.text || ''}` });
