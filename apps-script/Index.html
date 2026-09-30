@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<base target="_top">
+<style>
+  body{font:15px/1.6 system-ui,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;color:#1B2A41}
+  h1{font-size:20px}
+  .box{border:2px dashed #C9D2DC;border-radius:10px;padding:28px;text-align:center}
+  progress{width:100%;height:14px}
+  #log{font-size:13px;color:#5E6B7C;max-height:220px;overflow:auto;white-space:pre-wrap}
+  a.btn,button{display:inline-block;margin-top:10px;padding:8px 16px;border-radius:7px;border:0;background:#1B2A41;color:#fff;text-decoration:none;cursor:pointer}
+  .err{color:#B23A33}
+</style>
+</head>
+<body>
+<h1>อัปโหลดรูปแชทเข้า Google Drive</h1>
+<p>เลือกไฟล์ .json จากสคริปต์เก็บแชท รูปจะถูกเก็บที่ <b>Drive › Discord-Trade › ชื่อห้อง › วันที่</b> แล้วได้ไฟล์ .json ใหม่ที่มีลิงก์ Drive แทน</p>
+<div class="box">
+  <input type="file" id="file" accept=".json,application/json">
+</div>
+<p id="status"></p>
+<progress id="bar" value="0" max="1" hidden></progress>
+<div id="done"></div>
+<div id="log"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const clean = s => String(s || '').replace(/[\\/:*?"<>|#]/g, '_').trim().slice(0, 60) || 'chat';
+const ext = src => {
+  const d = String(src).match(/^data:image\/(\w+)/);
+  if (d) return d[1] === 'jpeg' ? 'jpg' : d[1];
+  const u = String(src).split('?')[0].match(/\.(png|jpe?g|gif|webp)$/i);
+  return u ? u[1].toLowerCase().replace('jpeg', 'jpg') : 'jpg';
+};
+const call = (fn, ...a) => new Promise((ok, no) =>
+  google.script.run.withSuccessHandler(ok).withFailureHandler(no)[fn](...a));
+const log = (t, bad) => { const d = document.createElement('div'); d.textContent = t; if (bad) d.className = 'err'; $('log').prepend(d); };
+
+$('file').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  let data;
+  try { data = JSON.parse(await f.text()); } catch { $('status').textContent = 'อ่านไฟล์ไม่ได้'; return; }
+  const msgs = Array.isArray(data) ? data : data.messages;
+  const channel = clean(data.channel);
+  const jobs = [];
+  for (const m of msgs) {
+    m.drive = m.drive || [];
+    (m.imgs || []).forEach((src, i) => { if (src && !m.drive[i]) jobs.push({ m, i, src }); });
+  }
+  if (!jobs.length) { $('status').textContent = 'ไม่มีรูปที่ต้องอัปโหลด'; return; }
+  $('bar').hidden = false; $('bar').max = jobs.length; $('bar').value = 0;
+  let ok = 0, fail = 0;
+  for (const j of jobs) {
+    const d = new Date(j.m.time);
+    const day = isNaN(d) ? 'unknown' : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const hm = isNaN(d) ? '0000' : pad(d.getHours()) + pad(d.getMinutes());
+    const name = `${hm}_${clean(j.m.user)}_${j.m.id}_${j.i + 1}.${ext(j.src)}`;
+    $('status').textContent = `กำลังอัปโหลด ${ok + fail + 1}/${jobs.length}`;
+    try {
+      j.m.drive[j.i] = await call('saveImage', { channel, day, name, src: j.src, desc: `${j.m.user}: ${j.m.text || ''}` });
+      ok++;
+    } catch (err) { fail++; log(`${name}: ${err.message || err}`, true); }
+    $('bar').value = ok + fail;
+  }
+  const out = JSON.stringify(Array.isArray(data) ? { messages: msgs } : data);
+  const outName = f.name.replace(/\.json$/i, '') + '-drive.json';
+  $('status').textContent = `เสร็จ: สำเร็จ ${ok} รูป${fail ? ` · ไม่สำเร็จ ${fail} รูป` : ''}`;
+  try {
+    const url = await call('saveJson', channel, outName, out);
+    $('done').innerHTML = `<a class="btn" href="${url}" target="_blank">เปิดไฟล์ .json ใหม่ใน Drive</a> `;
+  } catch (err) { log('บันทึก .json ลง Drive ไม่สำเร็จ: ' + (err.message || err), true); }
+  const a = document.createElement('a');
+  a.className = 'btn'; a.textContent = 'ดาวน์โหลด .json ใหม่';
+  a.href = URL.createObjectURL(new Blob([out], { type: 'application/json' })); a.download = outName;
+  $('done').append(a);
+};
+</script>
+</body>
+</html>

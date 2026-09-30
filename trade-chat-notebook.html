@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สมุดสรุปห้องเทรด</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF1F4; --sheet:#FFFFFF; --ink:#1B2A41; --muted:#5E6B7C; --rule:#D3DAE2;
+  --gold:#A87B1E; --gold-soft:#F4E7C8; --bull:#23795A; --bull-soft:#DCEFE6; --bear:#B23A33;
+  --grid:rgba(27,42,65,.045);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#10161F; --sheet:#18212D; --ink:#E6ECF2; --muted:#93A1B2; --rule:#2A3646;
+    --gold:#D9AE55; --gold-soft:#3A3120; --bull:#4DB88E; --bull-soft:#1B3329; --bear:#E07068;
+    --grid:rgba(230,236,242,.035);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10161F; --sheet:#18212D; --ink:#E6ECF2; --muted:#93A1B2; --rule:#2A3646;
+  --gold:#D9AE55; --gold-soft:#3A3120; --bull:#4DB88E; --bull-soft:#1B3329; --bear:#E07068;
+  --grid:rgba(230,236,242,.035);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;min-height:100%;color:var(--ink);font:15px/1.65 "IBM Plex Sans Thai",system-ui,sans-serif;
+  background:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+h1,h2,h3{font-family:"Chakra Petch","IBM Plex Sans Thai",sans-serif;line-height:1.25;margin:0}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+img{max-width:100%}
+
+header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px clamp(14px,3vw,32px);border-bottom:1px solid var(--rule);background:var(--sheet)}
+header.top h1{font-size:22px;font-weight:700;letter-spacing:.01em}
+header.top .chan{color:var(--muted);font-size:14px}
+.tabs{margin-left:auto;display:flex;gap:4px;background:var(--paper);padding:3px;border-radius:8px}
+.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:6px;font-weight:500;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--sheet);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+main{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 60px}
+.btn{border:1px solid var(--rule);background:var(--sheet);padding:7px 14px;border-radius:7px;font-weight:500}
+.btn.primary{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* empty / intake */
+.intake{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:start}
+.drop{border:2px dashed var(--rule);border-radius:12px;background:var(--sheet);padding:40px 24px;text-align:center}
+.drop.over{border-color:var(--gold);background:var(--gold-soft)}
+.drop h2{font-size:24px;margin-bottom:8px}
+.howto{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:20px 22px}
+.howto h3{font-size:17px;margin-bottom:10px}
+.howto ol{margin:0 0 12px;padding-left:20px}
+.howto li{margin-bottom:6px}
+.howto textarea{width:100%;height:120px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--rule);border-radius:8px;background:var(--paper);padding:8px;resize:vertical}
+.warn{border-left:3px solid var(--bear);padding:6px 10px;margin-top:12px;background:var(--paper);font-size:13px}
+
+/* reader layout */
+.reader{display:grid;grid-template-columns:230px minmax(0,1fr);gap:22px;align-items:start}
+.days{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:8px}
+.day{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 10px;border-radius:8px}
+.day[aria-current="true"]{background:var(--paper)}
+.day .d{display:flex;justify-content:space-between;font-weight:600;font-size:14px}
+.day .d .n{color:var(--muted);font-weight:400}
+.day .vol{height:6px;margin-top:5px;background:var(--rule);border-radius:3px;overflow:hidden}
+.day .vol i{display:block;height:100%;background:var(--gold)}
+.day .done{color:var(--bull);font-size:12px}
+
+.sheet{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:20px 22px;margin-bottom:18px}
+.sumhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.sumhead h2{font-size:21px}
+.sumhead .actions{margin-left:auto;display:flex;gap:8px}
+.overview{font-size:16px;max-width:70ch}
+.topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:16px}
+.topic h3{font-size:16px;margin-bottom:4px;padding-bottom:4px;border-bottom:2px solid var(--gold)}
+.topic ul{margin:6px 0 0;padding-left:18px}
+.methods{margin-top:18px}
+.method{border-left:3px solid var(--bull);background:var(--bull-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin-top:10px}
+.method b{font-family:"Chakra Petch",sans-serif}
+.refs a{font-size:12px;color:var(--gold);margin-right:8px;text-decoration:none}
+.status{padding:14px;background:var(--paper);border-radius:8px}
+
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.filters input[type=search]{flex:1;min-width:180px;border:1px solid var(--rule);background:var(--sheet);border-radius:7px;padding:7px 10px}
+.msgs{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+.msg{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;padding:9px 14px;border-top:1px solid var(--rule)}
+.msg:first-child{border-top:0}
+.msg.keep{background:var(--gold-soft)}
+.msg.flash{outline:2px solid var(--gold);outline-offset:-2px}
+.msg time{color:var(--muted);font-size:12px;padding-top:3px;font-variant-numeric:tabular-nums}
+.msg .u{font-weight:600;font-size:14px}
+.msg .t{white-space:pre-wrap;overflow-wrap:anywhere}
+.msg .why{font-size:12px;color:var(--gold);margin-top:2px}
+.msg .imgs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.msg .imgs img{max-height:180px;border-radius:6px;border:1px solid var(--rule);cursor:zoom-in}
+.msg .imgs a,.note a{font-size:12px;color:var(--gold)}
+.star{border:1px solid var(--rule);background:var(--sheet);border-radius:7px;width:34px;height:34px;font-size:17px;line-height:1;color:var(--muted)}
+.star.on{background:var(--gold);border-color:var(--gold);color:#fff}
+
+/* library */
+.lib-tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.lib-tools input{flex:1;min-width:200px;border:1px solid var(--rule);background:var(--sheet);border-radius:7px;padding:8px 10px}
+.note{background:var(--sheet);border:1px solid var(--rule);border-left:4px solid var(--gold);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.note .meta{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.note .t{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
+.note textarea{width:100%;min-height:52px;border:1px solid var(--rule);border-radius:7px;background:var(--paper);padding:6px 8px;resize:vertical}
+.note .row{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+.note .imgs img{max-height:220px;border-radius:6px;margin:4px 6px 0 0;cursor:zoom-in}
+
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:20px;z-index:10;cursor:zoom-out}
+.lightbox.on{display:flex}
+.lightbox img{max-height:100%;max-width:100%}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--sheet);padding:8px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+[hidden]{display:none!important}
+
+@media (max-width:820px){
+  .intake,.reader{grid-template-columns:1fr}
+  .days{position:static;display:flex;overflow-x:auto;gap:4px}
+  .day{min-width:130px}
+  .msg{grid-template-columns:minmax(0,1fr) auto}
+  .msg time{grid-column:1/-1;padding:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>สมุดสรุปห้องเทรด</h1>
+    <div class="chan" id="chanName">ยังไม่ได้โหลดแชท</div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="read">อ่านสรุป</button>
+    <button role="tab" aria-selected="false" data-tab="lib">สมุดบันทึก <span id="libCount"></span></button>
+  </div>
+</header>
+
+<main>
+  <!-- INTAKE -->
+  <section id="intake" class="intake">
+    <label class="drop" id="drop">
+      <h2>วางไฟล์แชทที่นี่</h2>
+      <p class="muted">ลากไฟล์ <b>.json</b> จากสคริปต์เก็บแชทมาวาง หรือคลิกเพื่อเลือกไฟล์ (เลือกหลายไฟล์ได้)</p>
+      <input type="file" id="file" accept=".json,application/json" multiple hidden>
+      <span class="btn primary">เลือกไฟล์</span>
+    </label>
+    <div class="howto">
+      <h3>วิธีเก็บแชทจาก Discord</h3>
+      <ol>
+        <li>เปิด Discord บนเว็บเบราว์เซอร์ แล้วเข้าห้องที่ต้องการ</li>
+        <li>กด <b>F12</b> → แท็บ <b>Console</b> วางสคริปต์ด้านล่าง แล้วกด Enter</li>
+        <li>กด <b>Jump to unread</b> (หรือเลื่อนไปจุดที่อ่านค้าง) แล้ว<b>เลื่อนลงเอง</b>จนถึงข้อความล่าสุด ป้ายมุมขวาล่างจะนับจำนวนข้อความ</li>
+        <li>คลิกป้ายนับ เพื่อดาวน์โหลดไฟล์ .json</li>
+        <li>(ถ้าต้องการเก็บรูปถาวร) นำไฟล์ไปผ่านหน้าอัปโหลดรูปเข้า Google Drive ก่อน แล้วใช้ไฟล์ <b>-drive.json</b> ที่ได้</li>
+        <li>ลากไฟล์ .json มาวางที่นี่</li>
+      </ol>
+      <textarea id="collector" readonly aria-label="สคริปต์เก็บแชท"></textarea>
+      <button class="btn" id="copyCollector">คัดลอกสคริปต์</button>
+      <p class="warn">สคริปต์นี้ไม่เลื่อนหน้าจอให้เอง และไม่ส่งข้อมูลไปที่ใด ลิงก์รูปของ Discord หมดอายุภายในประมาณ 1 วัน ถ้าต้องการเก็บรูปถาวร ให้ส่งไฟล์เข้า Google Drive ในวันเดียวกับที่เก็บ</p>
+    </div>
+  </section>
+
+  <!-- READER -->
+  <section id="reader" class="reader" hidden>
+    <nav class="days" id="days" aria-label="วันที่"></nav>
+    <div>
+      <article class="sheet" id="summary"></article>
+      <div class="filters">
+        <input type="search" id="q" placeholder="ค้นหาข้อความ ชื่อ หรือคำเฉพาะ">
+        <label class="small"><input type="checkbox" id="onlyKeep"> เฉพาะที่ AI แนะนำให้เก็บ</label>
+        <label class="small"><input type="checkbox" id="onlyImg"> เฉพาะที่มีรูป</label>
+        <button class="btn small" id="loadMore">โหลดไฟล์เพิ่ม</button>
+      </div>
+      <div class="msgs" id="msgs"></div>
+    </div>
+  </section>
+
+  <!-- LIBRARY -->
+  <section id="library" hidden>
+    <div class="lib-tools">
+      <input type="search" id="libQ" placeholder="ค้นหาในสมุดบันทึก">
+      <button class="btn" id="exportMd">ดาวน์โหลดเป็น Markdown</button>
+    </div>
+    <div id="libList"></div>
+  </section>
+</main>
+
+<div class="lightbox" id="lightbox"><img alt=""></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ---------- collector script shown to the user ---------- */
+const COLLECTOR = `(() => {
+  if (window.__tcn) { console.log('สคริปต์ทำงานอยู่แล้ว'); return; }
+  const seen = new Map(), cache = new Map();
+  const shrink = url => {
+    if (cache.has(url)) return cache.get(url);
+    const p = (async () => {
+      try {
+        const b = await (await fetch(url)).blob();
+        const bm = await createImageBitmap(b);
+        const s = Math.min(1, 1400 / Math.max(bm.width, bm.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(bm.width * s); c.height = Math.round(bm.height * s);
+        c.getContext('2d').drawImage(bm, 0, 0, c.width, c.height);
+        return c.toDataURL('image/jpeg', 0.78);
+      } catch (e) { return url; }
+    })();
+    cache.set(url, p); return p;
+  };
+  const badge = document.createElement('button');
+  badge.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:99999;padding:10px 16px;border:0;border-radius:10px;background:#A87B1E;color:#fff;font:600 14px sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer';
+  document.body.appendChild(badge);
+  const grab = () => {
+    document.querySelectorAll('li[id^="chat-messages-"]').forEach(li => {
+      const id = li.id.split('-').pop();
+      const srcs = [...li.querySelectorAll('[class*="imageWrapper"] img, [class*="mediaAttachmentsContainer"] img')]
+        .map(i => i.currentSrc || i.src).filter(s => /discordapp\\.(com|net)|discord\\.com/.test(s));
+      let m = seen.get(id);
+      if (!m) {
+        m = { id,
+          time: li.querySelector('time')?.getAttribute('datetime') || '',
+          user: li.querySelector('[id^="message-username-"] [class*="username_"], h3 [class*="username_"]')?.innerText || '',
+          text: li.querySelector('[id^="message-content-"]')?.innerText || '',
+          reply: li.querySelector('[id^="message-reply-context-"] [class*="repliedTextContent"]')?.innerText || '',
+          src: [], imgs: [] };
+        seen.set(id, m);
+      }
+      srcs.forEach(s => { if (!m.src.includes(s)) { m.src.push(s); m.imgs.push(shrink(s)); } });
+    });
+    badge.textContent = 'เก็บแล้ว ' + seen.size + ' ข้อความ · คลิกเพื่อดาวน์โหลด';
+  };
+  const obs = new MutationObserver(() => { clearTimeout(window.__tcnT); window.__tcnT = setTimeout(grab, 150); });
+  obs.observe(document.body, { childList: true, subtree: true });
+  grab();
+  badge.onclick = async () => {
+    badge.textContent = 'กำลังเตรียมรูป...';
+    const rows = [...seen.values()].sort((a, b) => (BigInt(a.id) < BigInt(b.id) ? -1 : 1));
+    let last = '';
+    const out = [];
+    for (const r of rows) {
+      if (r.user) last = r.user;
+      out.push({ id: r.id, time: r.time, user: r.user || last, text: r.text, reply: r.reply, imgs: await Promise.all(r.imgs) });
+    }
+    const data = { channel: document.title.replace(/ \\| Discord$/, ''), exportedAt: new Date().toISOString(), messages: out };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    a.download = 'discord-' + new Date().toISOString().slice(0, 16).replace(':', '') + '.json';
+    a.click();
+    grab();
+  };
+  window.__tcn = { stop: () => { obs.disconnect(); badge.remove(); delete window.__tcn; } };
+  console.log('เริ่มเก็บแล้ว: เลื่อนแชทเอง แล้วคลิกป้ายมุมขวาล่างเพื่อดาวน์โหลด  (หยุด: __tcn.stop())');
+})();`;
+document.getElementById('collector').value = COLLECTOR;
+document.getElementById('copyCollector').onclick = async () => {
+  const ta = document.getElementById('collector');
+  try { await navigator.clipboard.writeText(COLLECTOR); toast('คัดลอกแล้ว'); }
+  catch { ta.focus(); ta.select(); toast('เลือกข้อความแล้ว กด Ctrl+C เพื่อคัดลอก'); }
+};
+
+/* ---------- state ---------- */
+const S = { channel: '', msgs: new Map(), days: [], day: null, summaries: {}, notes: [], busy: false };
+let sample = null, db = null, assets = null, uid = null, col = null, imgLimit = 0;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dayKey = iso => { const d = new Date(iso); return isNaN(d) ? 'ไม่ทราบวัน' : d.toLocaleDateString('sv-SE'); };
+const hhmm = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); };
+const dayLabel = k => { const d = new Date(k + 'T00:00'); return isNaN(d) ? k : d.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' }); };
+const hash = s => { let h = 5381; for (const c of s) h = ((h << 5) + h + c.codePointAt(0)) >>> 0; return h.toString(36); };
+const sumKey = () => 's_' + hash(S.channel || 'chat') + '_' + String(S.day).replace(/[^\w-]/g, '_');
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 2200); }
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  const lib = b.dataset.tab === 'lib';
+  $('library').hidden = !lib;
+  $('intake').hidden = lib || S.msgs.size > 0;
+  $('reader').hidden = lib || S.msgs.size === 0;
+  if (lib) renderLib();
+});
+
+/* ---------- file intake ---------- */
+const drop = $('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); loadFiles(e.dataTransfer.files); });
+$('file').onchange = e => loadFiles(e.target.files);
+$('loadMore').onclick = () => $('file').click();
+
+async function loadFiles(files) {
+  let added = 0;
+  for (const f of files) {
+    try {
+      const data = JSON.parse(await f.text());
+      const list = Array.isArray(data) ? data : data.messages;
+      if (!Array.isArray(list)) throw 0;
+      if (data.channel) S.channel = data.channel;
+      for (const m of list) {
+        if (!m || !m.id) continue;
+        if (!S.msgs.has(m.id)) added++;
+        const imgs = (m.imgs || m.images || []).filter(Boolean);
+        const drive = Array.isArray(m.drive) ? m.drive : [];
+        S.msgs.set(String(m.id), { id: String(m.id), time: m.time || '', user: m.user || '', text: m.text || '', reply: m.reply || '', imgs, drive });
+      }
+    } catch { toast('อ่านไฟล์ ' + f.name + ' ไม่ได้ ต้องเป็นไฟล์ .json จากสคริปต์เก็บแชท'); }
+  }
+  if (!S.msgs.size) return;
+  const byDay = {};
+  for (const m of S.msgs.values()) (byDay[dayKey(m.time)] ||= []).push(m);
+  for (const k in byDay) byDay[k].sort((a, b) => (BigInt(a.id) < BigInt(b.id) ? -1 : 1));
+  S.byDay = byDay;
+  S.days = Object.keys(byDay).sort();
+  if (!S.day || !byDay[S.day]) S.day = S.days[0];
+  $('chanName').textContent = (S.channel || 'ห้องแชท') + ' · ' + S.msgs.size.toLocaleString() + ' ข้อความ';
+  $('intake').hidden = true; $('reader').hidden = false; $('library').hidden = true;
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === 'read'));
+  renderDays(); renderDay();
+  if (added) toast('เพิ่ม ' + added + ' ข้อความ');
+}
+
+/* ---------- day list ---------- */
+function renderDays() {
+  const max = Math.max(...S.days.map(d => S.byDay[d].length));
+  $('days').innerHTML = S.days.map(d => {
+    const n = S.byDay[d].length, done = S.summaries[keyFor(d)];
+    return `<button class="day" data-d="${d}" aria-current="${d === S.day}">
+      <span class="d"><span>${esc(dayLabel(d))}</span><span class="n">${n}</span></span>
+      <span class="vol"><i style="width:${Math.max(4, n / max * 100)}%"></i></span>
+      ${done ? '<span class="done">สรุปแล้ว</span>' : ''}</button>`;
+  }).join('');
+  $('days').querySelectorAll('.day').forEach(b => b.onclick = () => { S.day = b.dataset.d; renderDays(); renderDay(); });
+}
+const keyFor = d => { const o = S.day; S.day = d; const k = sumKey(); S.day = o; return k; };
+
+/* ---------- summary ---------- */
+function renderDay() { renderSummary(); renderMsgs(); }
+
+function renderSummary() {
+  const el = $('summary'), list = S.byDay[S.day], sum = S.summaries[sumKey()];
+  const imgCount = list.reduce((a, m) => a + m.imgs.filter(isData).length, 0);
+  let head = `<div class="sumhead"><h2>${esc(dayLabel(S.day))}</h2>
+    <span class="muted small">${list.length} ข้อความ · ${imgCount} รูป</span>
+    <div class="actions">${sample ? `<button class="btn ${sum ? '' : 'gold'}" id="doSum">${sum ? 'สรุปใหม่' : 'สรุปวันนี้'}</button>` : ''}</div></div>`;
+  if (S.busy) { el.innerHTML = head + `<div class="status" id="sumStatus">กำลังอ่านแชท...</div>`; return; }
+  if (!sum) {
+    el.innerHTML = head + `<p class="status">${sample
+      ? 'กด “สรุปวันนี้” เพื่อให้ AI อ่านข้อความและรูปของวันนี้ แล้วสรุปประเด็น วิธีเทรดที่มีคนแชร์ และคัดข้อความที่น่าเก็บให้'
+      : 'การสรุปด้วย AI ใช้ได้เมื่อเปิดหน้านี้ผ่าน Claude ตอนนี้ยังอ่านข้อความและกด ⭐ เก็บเองได้ตามปกติ'}</p>`;
+  } else {
+    const ref = ids => (ids || []).filter(id => S.msgs.has(String(id))).map(id =>
+      `<a href="#m${esc(id)}" data-jump="${esc(id)}">${esc(hhmm(S.msgs.get(String(id)).time))} ${esc(S.msgs.get(String(id)).user)}</a>`).join('');
+    el.innerHTML = head + `<p class="overview">${esc(sum.overview)}</p>
+      ${sum.topics?.length ? `<div class="topics">${sum.topics.map(t => `<div class="topic"><h3>${esc(t.title)}</h3><ul>${(t.points || []).map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>`).join('')}</div>` : ''}
+      ${sum.methods?.length ? `<div class="methods"><h3>วิธีเทรดที่มีคนแชร์</h3>${sum.methods.map(m => `<div class="method"><b>${esc(m.name)}</b><div>${esc(m.detail)}</div><div class="refs">${ref(m.ids)}</div></div>`).join('')}</div>` : ''}
+      ${sum.questions?.length ? `<div class="methods"><h3>คำถามที่ยังค้าง</h3><ul>${sum.questions.map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>` : ''}
+      ${sum.truncated ? '<p class="muted small">วันนี้ข้อความยาวมาก AI อ่านได้ไม่ครบทุกข้อความ</p>' : ''}`;
+    el.querySelectorAll('[data-jump]').forEach(a => a.onclick = e => { e.preventDefault(); jump(a.dataset.jump); });
+  }
+  const b = $('doSum'); if (b) b.onclick = summarize;
+}
+
+const isData = s => typeof s === 'string' && s.startsWith('data:image');
+function dataToBlob(u) {
+  const [h, b] = u.split(','); const bin = atob(b); const a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return new Blob([a], { type: h.slice(5).split(';')[0] });
+}
+
+async function summarize() {
+  if (!sample || S.busy) return;
+  const list = S.byDay[S.day];
+  const pics = [];
+  const lines = [];
+  let bytes = 0, truncated = false;
+  for (const m of list) {
+    let tag = '';
+    for (const u of m.imgs) if (isData(u) && pics.length < imgLimit) { pics.push(u); tag += ` [รูป R${pics.length}]`; }
+    const line = `#${m.id} [${hhmm(m.time)}] ${m.user}: ${m.reply ? '(ตอบ: ' + m.reply.slice(0, 80) + ') ' : ''}${m.text}${tag}`;
+    bytes += new Blob([line]).size;
+    if (bytes > 200000) { truncated = true; break; }
+    lines.push(line);
+  }
+  const prompt = `คุณช่วยสรุปห้องแชท Discord ที่สมาชิกคุยเรื่องวิธีเทรดและการเรียนเทรด ผู้อ่านไม่มีเวลาอ่านทุกข้อความ
+${pics.length ? `แนบรูปมา ${pics.length} รูป เรียงตามลำดับ R1..R${pics.length} ตามป้าย [รูป Rn] ในข้อความ อ่านรายละเอียดในรูป (กราฟ ระดับราคา อินดิเคเตอร์ จุดเข้า-ออก) แล้วนำมาใช้ในสรุปด้วย` : ''}
+ตอบเป็นภาษาไทย เป็น JSON เท่านั้น ตามรูปแบบนี้:
+{"overview":"ภาพรวม 2-3 ประโยค",
+ "topics":[{"title":"หัวข้อ","points":["ประเด็นสั้นๆ"]}],
+ "methods":[{"name":"ชื่อวิธี/setup","detail":"เงื่อนไขเข้า ออก ตัดขาดทุน timeframe อินดิเคเตอร์ ตามที่มีในแชท","ids":["id ข้อความต้นทาง"]}],
+ "keep":[{"id":"id ข้อความ","why":"เหตุผลสั้นๆ ที่ควรเก็บ"}],
+ "questions":["คำถามสำคัญที่ยังไม่มีคำตอบ"]}
+กติกา: topics ไม่เกิน 6 หัวข้อ, methods เฉพาะที่มีรายละเอียดจริงในแชท, keep ไม่เกิน 20 ข้อความที่มีความรู้หรือวิธีที่นำไปใช้ได้ (ไม่รวมคำทักทายหรือแชทเล่น), อย่าแต่งข้อมูลที่ไม่มีในแชท, id ต้องคัดลอกจากเลขหลัง # เท่านั้น
+
+ข้อความ (${lines.length} ข้อความ${truncated ? ' ตัดท้ายเพราะยาวเกิน' : ''}):
+${lines.join('\n')}`;
+  S.busy = true; renderSummary();
+  try {
+    const res = await sample.json(prompt, { images: pics.map(dataToBlob), cache: false,
+      onText: () => { const s = $('sumStatus'); if (s) s.textContent = 'กำลังเขียนสรุป...'; } });
+    const sum = {
+      overview: String(res.overview || ''), topics: Array.isArray(res.topics) ? res.topics : [],
+      methods: Array.isArray(res.methods) ? res.methods : [], questions: Array.isArray(res.questions) ? res.questions : [],
+      keep: (Array.isArray(res.keep) ? res.keep : []).map(k => ({ id: String(k.id).replace('#', ''), why: String(k.why || '') })),
+      truncated, day: S.day, channel: S.channel, kind: 'summary', at: Date.now()
+    };
+    S.summaries[sumKey()] = sum;
+    if (col) col.doc(sumKey()).set(sum).catch(() => toast('บันทึกสรุปไว้ถาวรไม่สำเร็จ แต่ยังอ่านได้ในหน้านี้'));
+  } catch (e) {
+    const msg = { not_granted: 'ยังไม่ได้อนุญาตให้ใช้ Claude สำหรับหน้านี้', rate_limited: 'ใช้งานถี่เกินไป ลองอีกครั้งภายหลัง',
+      prompt_too_large: 'ข้อความวันนี้ยาวเกินไป', invalid_json: 'AI ตอบในรูปแบบที่อ่านไม่ได้ ลองกดสรุปใหม่',
+      image_rejected: 'มีรูปที่ส่งให้ AI ไม่ได้', cancelled: '' }[e?.code] ?? 'สรุปไม่สำเร็จ ลองอีกครั้ง';
+    if (msg) toast(msg);
+  } finally { S.busy = false; renderDays(); renderSummary(); renderMsgs(); }
+}
+
+/* ---------- messages ---------- */
+['q', 'onlyKeep', 'onlyImg'].forEach(id => $(id).addEventListener('input', renderMsgs));
+function renderMsgs() {
+  const sum = S.summaries[sumKey()];
+  const keep = new Map((sum?.keep || []).map(k => [k.id, k.why]));
+  const q = $('q').value.trim().toLowerCase();
+  const saved = new Set(S.notes.map(n => n.msgId));
+  const list = S.byDay[S.day].filter(m =>
+    (!$('onlyKeep').checked || keep.has(m.id)) &&
+    (!$('onlyImg').checked || m.imgs.length) &&
+    (!q || (m.text + ' ' + m.user).toLowerCase().includes(q)));
+  $('msgs').innerHTML = list.length ? list.map(m => `
+    <div class="msg ${keep.has(m.id) ? 'keep' : ''}" id="m${esc(m.id)}">
+      <time>${esc(hhmm(m.time))}</time>
+      <div><div class="u">${esc(m.user)}</div>
+        ${m.reply ? `<div class="muted small">↳ ${esc(m.reply.slice(0, 120))}</div>` : ''}
+        ${m.text ? `<div class="t">${esc(m.text)}</div>` : ''}
+        ${keep.has(m.id) ? `<div class="why">AI แนะนำให้เก็บ: ${esc(keep.get(m.id))}</div>` : ''}
+        ${m.imgs.length ? `<div class="imgs">${m.imgs.map((u, i) => (isData(u) ? `<img src="${u}" alt="รูปจากแชท" loading="lazy">` : '') + (m.drive[i] ? `<a href="${esc(m.drive[i])}" target="_blank" rel="noopener">เปิดใน Drive</a>` : isData(u) ? '' : `<a href="${esc(u)}" target="_blank" rel="noopener">รูป (ลิงก์ Discord อาจหมดอายุ)</a>`)).join('')}</div>` : ''}
+      </div>
+      <button class="star ${saved.has(m.id) ? 'on' : ''}" data-id="${esc(m.id)}" aria-label="${saved.has(m.id) ? 'เก็บแล้ว' : 'เก็บลงสมุด'}" title="เก็บลงสมุดบันทึก">★</button>
+    </div>`).join('') : '<p class="status" style="margin:0">ไม่มีข้อความที่ตรงกับตัวกรอง</p>';
+  $('msgs').querySelectorAll('.star').forEach(b => b.onclick = () => toggleSave(b.dataset.id, b));
+  $('msgs').querySelectorAll('.imgs img').forEach(i => i.onclick = () => zoom(i.src));
+}
+function jump(id) {
+  $('onlyKeep').checked = false; $('onlyImg').checked = false; $('q').value = ''; renderMsgs();
+  const el = document.getElementById('m' + id); if (!el) return;
+  el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1800);
+}
+
+/* ---------- saving to notebook ---------- */
+async function toggleSave(id, btn) {
+  const existing = S.notes.find(n => n.msgId === id);
+  if (existing) { if (confirm('เอาข้อความนี้ออกจากสมุดบันทึก?')) await removeNote(existing); return; }
+  const m = S.msgs.get(id); if (!m) return;
+  btn.disabled = true;
+  const why = S.summaries[sumKey()]?.keep.find(k => k.id === id)?.why || '';
+  const note = { kind: 'note', msgId: id, user: m.user, time: m.time, channel: S.channel, text: m.text, reply: m.reply, memo: why, imgs: [], drive: m.drive.filter(Boolean), at: Date.now() };
+  for (const u of m.imgs.filter(isData)) {
+    if (assets) { try { const r = await assets.upload(dataToBlob(u)); note.imgs.push({ asset: r.id }); continue; } catch {} }
+    if (u.length < 180000) note.imgs.push({ data: u });
+  }
+  if (col) {
+    try { await col.doc('n_' + id).set(note); toast('เก็บลงสมุดแล้ว'); }
+    catch { toast('บันทึกไม่สำเร็จ'); }
+  } else { S.notes.push({ ...note, _id: 'n_' + id }); refreshNotes(); toast('เก็บแล้ว (เฉพาะในหน้านี้ เพราะไม่ได้เปิดผ่าน Claude)'); }
+  btn.disabled = false;
+}
+async function removeNote(n) {
+  if (col) { try { await col.doc(n._id).delete(); } catch { toast('ลบไม่สำเร็จ'); return; }
+    if (assets) for (const i of n.imgs || []) if (i.asset) assets.delete(i.asset).catch(() => {}); }
+  else { S.notes = S.notes.filter(x => x !== n); refreshNotes(); }
+  toast('เอาออกจากสมุดแล้ว');
+}
+function refreshNotes() {
+  $('libCount').textContent = S.notes.length ? '(' + S.notes.length + ')' : '';
+  if (!$('reader').hidden && S.day) renderMsgs();
+  if (!$('library').hidden) renderLib();
+}
+const imgSrc = i => i.asset ? '/_blob/' + i.asset : i.data;
+
+$('libQ').addEventListener('input', renderLib);
+function renderLib() {
+  const q = $('libQ').value.trim().toLowerCase();
+  const list = [...S.notes].sort((a, b) => (b.time || '').localeCompare(a.time || ''))
+    .filter(n => !q || [n.text, n.user, n.memo, n.channel].join(' ').toLowerCase().includes(q));
+  $('libList').innerHTML = list.length ? list.map(n => `
+    <div class="note" data-id="${esc(n._id)}">
+      <div class="meta"><b>${esc(n.user)}</b><span>${esc(n.time ? new Date(n.time).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '')}</span><span>${esc(n.channel)}</span></div>
+      ${n.reply ? `<div class="muted small">↳ ${esc(n.reply.slice(0, 120))}</div>` : ''}
+      <div class="t">${esc(n.text)}</div>
+      ${n.imgs?.length ? `<div class="imgs">${n.imgs.map(i => `<img src="${esc(imgSrc(i))}" alt="รูปที่บันทึกไว้" loading="lazy">`).join('')}</div>` : ''}
+      ${n.drive?.length ? `<div class="small">${n.drive.map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener">รูป ${i + 1} ใน Drive</a>`).join(' · ')}</div>` : ''}
+      <textarea placeholder="จดโน้ตของคุณ เช่น ใช้กับ TF ไหน หรือเงื่อนไขที่อยากทดสอบ" aria-label="โน้ต">${esc(n.memo)}</textarea>
+      <div class="row"><button class="btn small save">บันทึกโน้ต</button><button class="btn small del">เอาออก</button></div>
+    </div>`).join('')
+    : `<p class="status">${S.notes.length ? 'ไม่พบบันทึกที่ตรงกับคำค้น' : 'ยังไม่มีบันทึก กด ★ ที่ข้อความในหน้าอ่านสรุปเพื่อเก็บไว้ที่นี่'}</p>`;
+  $('libList').querySelectorAll('.note').forEach(el => {
+    const n = S.notes.find(x => x._id === el.dataset.id);
+    el.querySelector('.save').onclick = async () => {
+      const memo = el.querySelector('textarea').value;
+      if (col) { try { await col.doc(n._id).update({ memo }); toast('บันทึกโน้ตแล้ว'); } catch { toast('บันทึกไม่สำเร็จ'); } }
+      else { n.memo = memo; toast('บันทึกโน้ตแล้ว'); }
+    };
+    el.querySelector('.del').onclick = () => { if (confirm('เอาข้อความนี้ออกจากสมุดบันทึก?')) removeNote(n); };
+    el.querySelectorAll('img').forEach(i => i.onclick = () => zoom(i.src));
+  });
+}
+
+let downloads = null;
+$('exportMd').onclick = async () => {
+  if (!S.notes.length) { toast('ยังไม่มีบันทึก'); return; }
+  const md = '# สมุดบันทึกห้องเทรด\n\n' + [...S.notes].sort((a, b) => (a.time || '').localeCompare(b.time || '')).map(n =>
+    `## ${n.user} · ${n.time ? new Date(n.time).toLocaleString('th-TH') : ''}\n\n${n.text}\n\n${n.memo ? '> โน้ต: ' + n.memo + '\n\n' : ''}${n.drive?.length ? n.drive.map((u, i) => `[รูป ${i + 1}](${u})`).join(' ') + '\n\n' : n.imgs?.length ? '_มีรูป ' + n.imgs.length + ' รูป (ดูในสมุดบันทึก)_\n\n' : ''}`).join('---\n\n');
+  if (!downloads) { toast('ดาวน์โหลดได้เมื่อเปิดหน้านี้ผ่าน Claude'); return; }
+  try { await downloads.save({ filename: 'trade-notes.md', data: md }); } catch { toast('ดาวน์โหลดไม่สำเร็จ'); }
+};
+
+function zoom(src) { const l = $('lightbox'); l.querySelector('img').src = src; l.classList.add('on'); }
+$('lightbox').onclick = () => $('lightbox').classList.remove('on');
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('lightbox').classList.remove('on'); });
+
+/* ---------- runtime capabilities ---------- */
+(async () => {
+  if (!window.claude?.use) return;
+  sample = await claude.use('sample');
+  if (sample) { try { const l = await sample.limits(); imgLimit = l.images ? Math.min(l.images.maxCount, 20) : 0; } catch { imgLimit = 0; } }
+  downloads = await claude.use('downloads');
+  assets = await claude.use('assets');
+  db = await claude.use('db');
+  const user = await claude.use('user');
+  if (db && user) {
+    try {
+      uid = await user.id();
+      col = db.collection('data/users/' + uid);
+      col.onSnapshot(snap => {
+        S.notes = []; 
+        for (const d of snap.docs) {
+          const v = d.data(); if (!v) continue;
+          if (v.kind === 'note') S.notes.push({ ...v, _id: d.id });
+          else if (v.kind === 'summary') S.summaries[d.id] = v;
+        }
+        refreshNotes();
+        if (S.days.length) { renderDays(); renderSummary(); }
+      }, () => toast('โหลดสมุดบันทึกไม่สำเร็จ'));
+    } catch { col = null; }
+  }
+  if (S.days.length) renderSummary();
+})();
+</script>
+</body>
+</html>
